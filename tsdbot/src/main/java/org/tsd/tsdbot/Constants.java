@@ -135,6 +135,10 @@ public class Constants {
         public static final String COMMAND = ".hustle";
     }
 
+    public static class OmniDatabase {
+        public static final String COMMAND_PREFIX = ".odb";
+    }
+
     public static class Printout {
         public static final String GIS_API_TARGET = "https://www.googleapis.com/customsearch/v1";
 
@@ -146,6 +150,7 @@ public class Constants {
 
     public static class Role {
         public static final String TSD = "tsd";
+        public static final String NOT_AUTHORIZED_MESSAGE = "You don't have permission to do that";
     }
 
     public static class View {

@@ -15,12 +15,16 @@ import de.btobastian.javacord.DiscordAPI;
 import de.btobastian.javacord.Javacord;
 import de.btobastian.javacord.entities.Server;
 import io.dropwizard.Application;
+import io.dropwizard.db.DataSourceFactory;
+import io.dropwizard.hibernate.HibernateBundle;
+import io.dropwizard.hibernate.UnitOfWorkAwareProxyFactory;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import io.dropwizard.views.ViewBundle;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.hibernate.SessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tsd.tsdbot.app.BotUrl;
@@ -38,6 +42,8 @@ import org.tsd.tsdbot.listener.CreateMessageListener;
 import org.tsd.tsdbot.listener.MessageFilter;
 import org.tsd.tsdbot.listener.MessageHandler;
 import org.tsd.tsdbot.listener.channel.*;
+import org.tsd.tsdbot.odb.OdbItem;
+import org.tsd.tsdbot.odb.OdbItemDao;
 import org.tsd.tsdbot.printout.PrintoutLibrary;
 import org.tsd.tsdbot.resources.FilenameResource;
 import org.tsd.tsdbot.resources.HustleResource;
@@ -57,6 +63,13 @@ public class TSDBotApplication extends Application<TSDBotConfiguration> {
 
     private static final Logger log = LoggerFactory.getLogger(TSDBotApplication.class);
 
+    private final HibernateBundle<TSDBotConfiguration> hibernate = new HibernateBundle<TSDBotConfiguration>(OdbItem.class) {
+        @Override
+        public DataSourceFactory getDataSourceFactory(TSDBotConfiguration configuration) {
+            return configuration.getDatabase();
+        }
+    };
+
     public static void main(final String[] args) throws Exception {
         new TSDBotApplication().run(args);
     }
@@ -69,6 +82,7 @@ public class TSDBotApplication extends Application<TSDBotConfiguration> {
     @Override
     public void initialize(final Bootstrap<TSDBotConfiguration> bootstrap) {
         bootstrap.addBundle(new ViewBundle<>());
+        bootstrap.addBundle(hibernate);
     }
 
     @Override
@@ -83,6 +97,9 @@ public class TSDBotApplication extends Application<TSDBotConfiguration> {
             @Override
             protected void configure() {
                 bind(DiscordAPI.class).toInstance(api);
+
+                bind(SessionFactory.class)
+                        .toInstance(hibernate.getSessionFactory());
 
                 String stageString = configuration.getStage();
                 Stage stage = Stage.valueOf(stageString);
@@ -174,6 +191,11 @@ public class TSDBotApplication extends Application<TSDBotConfiguration> {
 
                 bind(PrintoutLibrary.class);
 
+                OdbItemDao odbItemDao = new UnitOfWorkAwareProxyFactory(hibernate)
+                        .create(OdbItemDao.class, SessionFactory.class, hibernate.getSessionFactory());
+                bind(OdbItemDao.class)
+                        .toInstance(odbItemDao);
+
                 install(new FactoryModuleBuilder().build(ChannelThreadFactory.class));
                 install(new FactoryModuleBuilder().build(FilterFactory.class));
 
@@ -194,7 +216,8 @@ public class TSDBotApplication extends Application<TSDBotConfiguration> {
                 injector.getInstance(FilenameHandler.class),
                 injector.getInstance(GvHandler.class),
                 injector.getInstance(HustleHandler.class),
-                injector.getInstance(PrintoutHandler.class));
+                injector.getInstance(PrintoutHandler.class),
+                injector.getInstance(OmniDatabaseHandler.class));
 
         List<MessageFilter> messageFilters = Arrays.asList(
                 injector.getInstance(HustleFilter.class));

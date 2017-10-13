@@ -31,7 +31,6 @@ public class ChooseHandler extends MessageHandler<DiscordChannel> {
         return startsWith(message.getContent(), PREFIX);
     }
 
-
     @Override
     public void doHandle(DiscordMessage<DiscordChannel> message) throws Exception {
         log.info("Handling choose: channel={}, message={}",

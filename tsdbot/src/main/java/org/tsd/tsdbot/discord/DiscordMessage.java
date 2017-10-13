@@ -80,6 +80,10 @@ public class DiscordMessage<T extends MessageRecipient> {
         }
     }
 
+    public boolean authorHasRole(String role) {
+        return author.hasRole(message.getChannelReceiver().getServer(), role);
+    }
+
     @Override
     public String toString() {
         return new ToStringBuilder(this)

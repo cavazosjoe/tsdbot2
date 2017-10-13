@@ -2,6 +2,7 @@ package org.tsd.tsdbot.listener.channel;
 
 import de.btobastian.javacord.DiscordAPI;
 import org.tsd.tsdbot.discord.DiscordMessage;
+import org.tsd.tsdbot.discord.MessageType;
 import org.tsd.tsdbot.hustle.Hustle;
 import org.tsd.tsdbot.listener.MessageFilter;
 import org.tsd.tsdbot.listener.MessageFilterException;
@@ -26,6 +27,8 @@ public class HustleFilter extends MessageFilter {
 
     @Override
     public void filter(DiscordMessage<?> message) throws MessageFilterException {
-        hustle.process(message);
+        if (message.getType().equals(MessageType.NORMAL)) {
+            hustle.process(message);
+        }
     }
 }
