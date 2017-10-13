@@ -12,6 +12,7 @@ import org.tsd.tsdbot.listener.MessageHandler;
 import org.tsd.tsdbot.odb.OdbItem;
 import org.tsd.tsdbot.odb.OdbItemDao;
 import org.tsd.tsdbot.odb.OmniDbException;
+import org.tsd.tsdbot.util.OdbUtils;
 
 import javax.inject.Inject;
 import java.util.Arrays;
@@ -140,7 +141,7 @@ public class OmniDatabaseHandler extends MessageHandler<DiscordChannel> {
 
         Set<String> tagsToSearch = Arrays.stream(parts)
                 .filter(part -> !StringUtils.equalsIgnoreCase("get", part))
-                .map(OmniDatabaseHandler::sanitizeTag)
+                .map(OdbUtils::sanitizeTag)
                 .collect(Collectors.toSet());
         log.info("Searching for tags: {}", tagsToSearch);
 
@@ -154,13 +155,6 @@ public class OmniDatabaseHandler extends MessageHandler<DiscordChannel> {
                 message.getRecipient().sendMessage("ODB: " + item.getItem());
             }
         }
-    }
-
-    private static String sanitizeTag(String tag) {
-        if (StringUtils.isNotBlank(tag) && StringUtils.startsWith(tag, "#")) {
-            return StringUtils.substring(tag, 1);
-        }
-        return tag;
     }
 
     private static String buildFullItem(OdbItem item) {

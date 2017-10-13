@@ -24,6 +24,7 @@ jboss/server/minimal/work/**/*
 # Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
 
 .idea/*
+tsdbot/schema/mysql_users.sql
 
 # CMake
 cmake-build-debug/

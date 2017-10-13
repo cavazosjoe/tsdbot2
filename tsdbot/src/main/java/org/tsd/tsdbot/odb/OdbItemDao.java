@@ -8,9 +8,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.hibernate.SessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tsd.tsdbot.util.OdbUtils;
 
 import javax.persistence.Query;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class OdbItemDao extends AbstractDAO<OdbItem> {
 
@@ -31,9 +33,14 @@ public class OdbItemDao extends AbstractDAO<OdbItem> {
             throw new OmniDbException("No tags provided");
         }
 
+        // sanitize
+        List<String> sanitizedTags = Arrays.stream(tags)
+                .map(OdbUtils::sanitizeTag)
+                .collect(Collectors.toList());
+
         OdbItem odbItem = new OdbItem();
         odbItem.setItem(item);
-        odbItem.setTags(Arrays.asList(tags));
+        odbItem.setTags(sanitizedTags);
         currentSession().persist(odbItem);
         return odbItem.getId();
     }
@@ -81,7 +88,7 @@ public class OdbItemDao extends AbstractDAO<OdbItem> {
             }
             String tagParam = ":tag"+i;
             queryString.append(tagParam).append(" IN elements(odbItem.tags)");
-            parameters.put("tag"+i, tag);
+            parameters.put("tag"+i, OdbUtils.sanitizeTag(tag));
             i++;
         }
 
