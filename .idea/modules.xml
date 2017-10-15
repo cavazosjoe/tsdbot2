@@ -2,8 +2,10 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/shared/shared.iml" filepath="$PROJECT_DIR$/shared/shared.iml" />
       <module fileurl="file://$PROJECT_DIR$/tsdbot/tsdbot.iml" filepath="$PROJECT_DIR$/tsdbot/tsdbot.iml" />
       <module fileurl="file://$PROJECT_DIR$/tsdbot2.iml" filepath="$PROJECT_DIR$/tsdbot2.iml" />
+      <module fileurl="file://$PROJECT_DIR$/tsdtv-agent/tsdtv-agent.iml" filepath="$PROJECT_DIR$/tsdtv-agent/tsdtv-agent.iml" />
     </modules>
   </component>
 </project>

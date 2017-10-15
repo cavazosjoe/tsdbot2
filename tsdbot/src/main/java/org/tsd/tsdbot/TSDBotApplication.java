@@ -45,10 +45,7 @@ import org.tsd.tsdbot.listener.channel.*;
 import org.tsd.tsdbot.odb.OdbItem;
 import org.tsd.tsdbot.odb.OdbItemDao;
 import org.tsd.tsdbot.printout.PrintoutLibrary;
-import org.tsd.tsdbot.resources.FilenameResource;
-import org.tsd.tsdbot.resources.HustleResource;
-import org.tsd.tsdbot.resources.PrintoutResource;
-import org.tsd.tsdbot.resources.RandomFilenameResource;
+import org.tsd.tsdbot.resources.*;
 import twitter4j.Twitter;
 import twitter4j.TwitterFactory;
 
@@ -199,7 +196,7 @@ public class TSDBotApplication extends Application<TSDBotConfiguration> {
                 install(new FactoryModuleBuilder().build(ChannelThreadFactory.class));
                 install(new FactoryModuleBuilder().build(FilterFactory.class));
 
-                bind(FilenameResource.class);
+//                bind(FilenameResource.class);
             }
         });
 
@@ -239,5 +236,6 @@ public class TSDBotApplication extends Application<TSDBotConfiguration> {
         environment.jersey().register(injector.getInstance(RandomFilenameResource.class));
         environment.jersey().register(injector.getInstance(HustleResource.class));
         environment.jersey().register(injector.getInstance(PrintoutResource.class));
+        environment.jersey().register(injector.getInstance(TSDTVResource.class));
     }
 }
