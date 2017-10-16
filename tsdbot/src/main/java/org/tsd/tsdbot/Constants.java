@@ -3,6 +3,7 @@ package org.tsd.tsdbot;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 public class Constants {
@@ -151,6 +152,11 @@ public class Constants {
     public static class Role {
         public static final String TSD = "tsd";
         public static final String NOT_AUTHORIZED_MESSAGE = "You don't have permission to do that";
+    }
+
+    public static class TSDTV {
+        public static final long AGENT_HEARTBEAT_PERIOD_MILLIS
+                = TimeUnit.MINUTES.toMillis(5);
     }
 
     public static class View {

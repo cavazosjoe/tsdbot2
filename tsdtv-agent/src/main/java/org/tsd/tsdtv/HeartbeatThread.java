@@ -72,14 +72,17 @@ public class HeartbeatThread implements Runnable {
                 heartbeat.setUploadBitrate(null);
             }
 
+            long sleep;
             try {
-                tsdBotClient.sendTsdtvAgentHeartbeat(heartbeat);
+                sleep = tsdBotClient.sendTsdtvAgentHeartbeat(heartbeat);
             } catch (Exception e ) {
                 log.error("Error sending heartbeat", e);
+                sleep = PERIOD_MILLIS;
             }
 
             try {
-                Thread.sleep(PERIOD_MILLIS);
+                log.debug("Sleeping for {} ms", sleep);
+                Thread.sleep(sleep);
             } catch (InterruptedException e) {
                 log.error("Interrupted", e);
                 shutdown = true;

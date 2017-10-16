@@ -9,3 +9,13 @@ CREATE TABLE OdbTag (
   CONSTRAINT UNIQUE (itemId, tag),
   CONSTRAINT `fk_tag_item` FOREIGN KEY (itemId) REFERENCES OdbItem(id)
 ) ENGINE=InnoDB, CHARSET=utf8;
+
+CREATE TABLE TSDTVAgent (
+  id VARCHAR(36) NOT NULL PRIMARY KEY,
+  agentId VARCHAR(100) NOT NULL,
+  status ENUM('unregistered', 'registered', 'blacklisted') NOT NULL DEFAULT 'unregistered',
+  lastHeartbeatFrom VARCHAR(100),
+  CONSTRAINT UNIQUE (agentId),
+  INDEX (agentId),
+  INDEX (status)
+) ENGINE=InnoDB, CHARSET=utf8;

@@ -46,6 +46,10 @@ import org.tsd.tsdbot.odb.OdbItem;
 import org.tsd.tsdbot.odb.OdbItemDao;
 import org.tsd.tsdbot.printout.PrintoutLibrary;
 import org.tsd.tsdbot.resources.*;
+import org.tsd.tsdbot.tsdtv.AgentRegistry;
+import org.tsd.tsdbot.tsdtv.TSDTVAgent;
+import org.tsd.tsdbot.tsdtv.TSDTVAgentDao;
+import org.tsd.tsdbot.tsdtv.library.TSDTVLibrary;
 import twitter4j.Twitter;
 import twitter4j.TwitterFactory;
 
@@ -60,7 +64,9 @@ public class TSDBotApplication extends Application<TSDBotConfiguration> {
 
     private static final Logger log = LoggerFactory.getLogger(TSDBotApplication.class);
 
-    private final HibernateBundle<TSDBotConfiguration> hibernate = new HibernateBundle<TSDBotConfiguration>(OdbItem.class) {
+    private final HibernateBundle<TSDBotConfiguration> hibernate = new HibernateBundle<TSDBotConfiguration>(
+            OdbItem.class,
+            TSDTVAgent.class) {
         @Override
         public DataSourceFactory getDataSourceFactory(TSDBotConfiguration configuration) {
             return configuration.getDatabase();
@@ -188,15 +194,23 @@ public class TSDBotApplication extends Application<TSDBotConfiguration> {
 
                 bind(PrintoutLibrary.class);
 
-                OdbItemDao odbItemDao = new UnitOfWorkAwareProxyFactory(hibernate)
+                UnitOfWorkAwareProxyFactory proxyFactory = new UnitOfWorkAwareProxyFactory(hibernate);
+
+                OdbItemDao odbItemDao = proxyFactory
                         .create(OdbItemDao.class, SessionFactory.class, hibernate.getSessionFactory());
                 bind(OdbItemDao.class)
                         .toInstance(odbItemDao);
 
+                TSDTVAgentDao tsdtvAgentDao = proxyFactory
+                        .create(TSDTVAgentDao.class, SessionFactory.class, hibernate.getSessionFactory());
+                bind(TSDTVAgentDao.class)
+                        .toInstance(tsdtvAgentDao);
+
+                bind(AgentRegistry.class);
+                bind(TSDTVLibrary.class);
+
                 install(new FactoryModuleBuilder().build(ChannelThreadFactory.class));
                 install(new FactoryModuleBuilder().build(FilterFactory.class));
-
-//                bind(FilenameResource.class);
             }
         });
 

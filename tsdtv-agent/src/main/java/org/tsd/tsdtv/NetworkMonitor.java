@@ -6,11 +6,9 @@ import fr.bmartel.speedtest.SpeedTestReport;
 import fr.bmartel.speedtest.SpeedTestSocket;
 import fr.bmartel.speedtest.inter.ISpeedTestListener;
 import fr.bmartel.speedtest.model.SpeedTestError;
-import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.math.BigDecimal;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
@@ -47,9 +45,9 @@ public class NetworkMonitor implements Runnable {
 
                 @Override
                 public void onProgress(float v, SpeedTestReport speedTestReport) {
-                    log.debug("Progress {}: bitrate = {}/s",
+                    log.debug("Progress {}: bitrate = {} kbit/s",
                             speedTestReport.getProgressPercent(),
-                            getHumanReadableBytes(speedTestReport.getTransferRateBit()));
+                            report.getTransferRateBit().longValue()/1000);
                 }
 
                 @Override
@@ -78,7 +76,7 @@ public class NetworkMonitor implements Runnable {
     }
 
     private void publishReport(SpeedTestReport report) {
-        log.info("Speed test finished: bitrate = {}/s", getHumanReadableBytes(report.getTransferRateBit()));
+        log.info("Speed test finished: bitrate = {} kbit/s", report.getTransferRateBit().longValue()/1000);
         this.report = report;
         this.error = null;
     }
@@ -87,10 +85,6 @@ public class NetworkMonitor implements Runnable {
         log.error("Speed test ERROR ({}): {}", error, message);
         this.report = null;
         this.error = error;
-    }
-
-    private static String getHumanReadableBytes(BigDecimal bitrate) {
-        return FileUtils.byteCountToDisplaySize(bitrate.longValue());
     }
 
     public void shutdown() {
