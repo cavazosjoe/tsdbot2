@@ -1,5 +1,6 @@
 package org.tsd.tsdbot.tsdtv.library;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.tsd.tsdbot.tsdtv.OnlineAgent;
 
 public class AgentMedia<T> {
@@ -38,5 +39,14 @@ public class AgentMedia<T> {
 
     public void setAgentBitrate(Double agentBitrate) {
         this.agentBitrate = agentBitrate;
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("media", media)
+                .append("agentId", agentId)
+                .append("agentBitrate", agentBitrate)
+                .toString();
     }
 }

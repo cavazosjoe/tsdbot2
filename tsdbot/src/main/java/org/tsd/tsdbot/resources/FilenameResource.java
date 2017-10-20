@@ -1,6 +1,5 @@
 package org.tsd.tsdbot.resources;
 
-import com.codahale.metrics.annotation.Timed;
 import org.tsd.tsdbot.filename.FilenameLibrary;
 import org.tsd.tsdbot.util.FileUtils;
 import org.tsd.tsdbot.view.FilenamesView;
@@ -29,14 +28,12 @@ public class FilenameResource {
 
     @GET
     @Produces(MediaType.TEXT_HTML)
-    @Timed
     public FilenamesView listFilenames() {
         return new FilenamesView(filenameLibrary);
     }
 
     @GET
     @Path("{filename}")
-    @Timed
     public Response getFilename(@PathParam("filename") String filename) throws IOException {
         byte[] data = filenameLibrary.getFilename(filename).getData();
         String contentType = fileUtils.detectMimeType(data, filename);

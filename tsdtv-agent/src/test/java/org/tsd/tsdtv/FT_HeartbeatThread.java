@@ -26,9 +26,9 @@ public class FT_HeartbeatThread {
 
     @Before
     public void setup() throws IOException {
-        fFprobe = new FFprobe("C:\\ffmpeg-3.3.3-win64-static\\bin\\ffprobe.exe");
-        inventoryDirectory = new File("C:/Users/Joe/Videos/tsdtv");
-        heartbeatThread = new HeartbeatThread(tsdBotClient, fFprobe, networkMonitor, "agentId", inventoryDirectory);
+//        fFprobe = new FFprobe("C:\\ffmpeg-3.3.3-win64-static\\bin\\ffprobe.exe");
+//        inventoryDirectory = new File("C:/Users/Joe/Videos/tsdtv");
+//        heartbeatThread = new HeartbeatThread(tsdBotClient, fFprobe, networkMonitor, "agentId", inventoryDirectory);
     }
 
     @Test

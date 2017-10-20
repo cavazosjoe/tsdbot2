@@ -1,6 +1,5 @@
 package org.tsd.tsdbot.resources;
 
-import com.codahale.metrics.annotation.Timed;
 import org.tsd.tsdbot.printout.PrintoutLibrary;
 import org.tsd.tsdbot.util.FileUtils;
 
@@ -26,7 +25,6 @@ public class PrintoutResource {
 
     @GET
     @Path("{printoutId}")
-    @Timed
     public Response getFilename(@PathParam("printoutId") String printoutId) throws IOException {
         byte[] data = printoutLibrary.getPrintout(printoutId);
         String contentType = fileUtils.detectMimeType(data, printoutId);

@@ -1,6 +1,5 @@
 package org.tsd.tsdbot.resources;
 
-import com.codahale.metrics.annotation.Timed;
 import com.google.inject.Inject;
 import org.tsd.tsdbot.hustle.Hustle;
 import org.tsd.tsdbot.view.HustleView;
@@ -22,7 +21,6 @@ public class HustleResource {
 
     @GET
     @Produces(MediaType.TEXT_HTML)
-    @Timed
     public HustleView hustle() {
         return new HustleView(hustle.getDataPoints());
     }

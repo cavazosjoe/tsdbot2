@@ -44,6 +44,6 @@ public class FfprobeTest {
 
         FFmpegExecutor executor = new FFmpegExecutor(fFmpeg, fFprobe);
 
-//        executor.createJob(builder).run();
+        executor.createJob(builder).run();
     }
 }

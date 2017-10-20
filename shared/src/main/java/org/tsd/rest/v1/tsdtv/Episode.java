@@ -1,9 +1,20 @@
 package org.tsd.rest.v1.tsdtv;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
 public class Episode extends Media {
 
     private String name;
+    private String seasonName;
+    private String seriesName;
     private Integer episodeNumber;
+
+    public Episode() {
+    }
+
+    public Episode(String agentId, MediaInfo mediaInfo) {
+        super(agentId, mediaInfo);
+    }
 
     public String getName() {
         return name;
@@ -19,5 +30,34 @@ public class Episode extends Media {
 
     public void setEpisodeNumber(Integer episodeNumber) {
         this.episodeNumber = episodeNumber;
+    }
+
+    public String getSeasonName() {
+        return seasonName;
+    }
+
+    public void setSeasonName(String seasonName) {
+        this.seasonName = seasonName;
+    }
+
+    public String getSeriesName() {
+        return seriesName;
+    }
+
+    public void setSeriesName(String seriesName) {
+        this.seriesName = seriesName;
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("name", name)
+                .append("seasonName", seasonName)
+                .append("seriesName", seriesName)
+                .append("episodeNumber", episodeNumber)
+                .append("id", id)
+                .append("agentId", agentId)
+                .append("mediaInfo", mediaInfo)
+                .toString();
     }
 }

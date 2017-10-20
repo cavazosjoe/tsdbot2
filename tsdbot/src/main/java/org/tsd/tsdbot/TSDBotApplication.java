@@ -15,6 +15,7 @@ import de.btobastian.javacord.DiscordAPI;
 import de.btobastian.javacord.Javacord;
 import de.btobastian.javacord.entities.Server;
 import io.dropwizard.Application;
+import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.db.DataSourceFactory;
 import io.dropwizard.hibernate.HibernateBundle;
 import io.dropwizard.hibernate.UnitOfWorkAwareProxyFactory;
@@ -85,6 +86,7 @@ public class TSDBotApplication extends Application<TSDBotConfiguration> {
     @Override
     public void initialize(final Bootstrap<TSDBotConfiguration> bootstrap) {
         bootstrap.addBundle(new ViewBundle<>());
+        bootstrap.addBundle(new AssetsBundle());
         bootstrap.addBundle(hibernate);
     }
 
@@ -116,6 +118,10 @@ public class TSDBotApplication extends Application<TSDBotConfiguration> {
                 bind(String.class)
                         .annotatedWith(Names.named(Constants.Annotations.GOOGLE_API_KEY))
                         .toInstance(configuration.getGoogle().getApiKey());
+
+                bind(String.class)
+                        .annotatedWith(Names.named(Constants.Annotations.TSDTV_STREAM_URL))
+                        .toInstance(configuration.getTsdtv().getStreamUrl());
 
                 try {
                     URL botUrl = new URL(configuration.getBotUrl());
@@ -251,5 +257,6 @@ public class TSDBotApplication extends Application<TSDBotConfiguration> {
         environment.jersey().register(injector.getInstance(HustleResource.class));
         environment.jersey().register(injector.getInstance(PrintoutResource.class));
         environment.jersey().register(injector.getInstance(TSDTVResource.class));
+        environment.jersey().register(injector.getInstance(JobResource.class));
     }
 }

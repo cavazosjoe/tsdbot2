@@ -8,6 +8,7 @@ import de.btobastian.javacord.entities.message.Message;
 import de.btobastian.javacord.entities.message.MessageHistory;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.RandomUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tsd.tsdbot.Constants;
@@ -48,9 +49,14 @@ public class HistoryCache extends MessageFilter {
     private final List<MessageHandler<DiscordChannel>> channelMessageHandlers = new LinkedList<>();
     private final List<MessageHandler<DiscordUser>> userMessageHandlers = new LinkedList<>();
 
+    private final boolean initializeUsers;
+
     @Inject
     public HistoryCache(DiscordAPI api) {
         super(api);
+
+        String initializeUsersEnv = System.getProperty("initializeUsers");
+        initializeUsers = StringUtils.isBlank(initializeUsersEnv) || Boolean.parseBoolean(initializeUsersEnv);
     }
 
     @Override
@@ -78,11 +84,14 @@ public class HistoryCache extends MessageFilter {
                 log.error("Error initializing channel " + channel.getName(), e);
             }
         }
-        for (User user : api.getUsers()) {
-            try {
-                initializeUserHistory(new DiscordUser(user));
-            } catch (Exception e) {
-                log.error("Error initializing user " + user.getName(), e);
+
+        if (initializeUsers) {
+            for (User user : api.getUsers()) {
+                try {
+                    initializeUserHistory(new DiscordUser(user));
+                } catch (Exception e) {
+                    log.error("Error initializing user " + user.getName(), e);
+                }
             }
         }
     }

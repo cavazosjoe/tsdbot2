@@ -1,5 +1,6 @@
 package org.tsd.tsdbot.tsdtv.library;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.tsd.rest.v1.tsdtv.Movie;
 import org.tsd.rest.v1.tsdtv.Series;
 
@@ -24,5 +25,13 @@ public class TSDTVListing {
 
     public void setAllSeries(List<AgentMedia<Series>> allSeries) {
         this.allSeries = allSeries;
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("allMovies", allMovies)
+                .append("allSeries", allSeries)
+                .toString();
     }
 }

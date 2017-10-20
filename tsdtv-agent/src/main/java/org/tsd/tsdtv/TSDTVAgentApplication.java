@@ -57,6 +57,10 @@ public class TSDTVAgentApplication extends Application<TSDTVAgentConfiguration> 
                     throw new RuntimeException("Invalid TSDBot URL: " + tsdtvAgentConfiguration.getTsdbotUrl(), e);
                 }
 
+                bind(String.class)
+                        .annotatedWith(Names.named("tsdtvUrl"))
+                        .toInstance(tsdtvAgentConfiguration.getTsdtvUrl());
+
                 File inventoryDirectory;
                 try {
                     inventoryDirectory = new File(tsdtvAgentConfiguration.getInventoryPath());

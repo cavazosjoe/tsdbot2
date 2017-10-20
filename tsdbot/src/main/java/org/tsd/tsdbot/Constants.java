@@ -22,6 +22,7 @@ public class Constants {
         public static final String MASHAPE_API_KEY = "mashapeApiKey";
         public static final String GOOGLE_GIS_CX = "gisCx";
         public static final String GOOGLE_API_KEY = "googleApiKey";
+        public static final String TSDTV_STREAM_URL = "tsdtvStreamUrl";
     }
 
     public static class History {
@@ -162,5 +163,6 @@ public class Constants {
     public static class View {
         public static final String FILENAMES_VIEW = "filenames.ftl";
         public static final String HUSTLE_VIEW = "hustle.ftl";
+        public static final String TSDTV_VIEW = "tsdtv.ftl";
     }
 }

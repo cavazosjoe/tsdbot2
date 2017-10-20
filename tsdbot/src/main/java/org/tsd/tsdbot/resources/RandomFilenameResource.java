@@ -1,6 +1,5 @@
 package org.tsd.tsdbot.resources;
 
-import com.codahale.metrics.annotation.Timed;
 import org.tsd.tsdbot.filename.FilenameLibrary;
 import org.tsd.tsdbot.util.FileUtils;
 
@@ -28,7 +27,6 @@ public class RandomFilenameResource {
     @GET
     @Path("{filename}")
     @Produces("image/*")
-    @Timed
     public Response getRandomFilename(@PathParam("filename") String filename) throws IOException {
         byte[] data = filenameLibrary.getRandomFilename(filename).getData();
         String contentType = fileUtils.detectMimeType(data, filename);

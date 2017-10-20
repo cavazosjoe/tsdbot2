@@ -17,6 +17,10 @@ public class TSDTVAgentConfiguration extends Configuration {
 
     @NotNull
     @NotEmpty
+    private String tsdtvUrl;
+
+    @NotNull
+    @NotEmpty
     private String inventoryPath;
 
     @NotNull
@@ -27,6 +31,13 @@ public class TSDTVAgentConfiguration extends Configuration {
     @NotEmpty
     private String ffprobe;
 
+    public String getTsdtvUrl() {
+        return tsdtvUrl;
+    }
+
+    public void setTsdtvUrl(String tsdtvUrl) {
+        this.tsdtvUrl = tsdtvUrl;
+    }
 
     public String getTsdbotUrl() {
         return tsdbotUrl;

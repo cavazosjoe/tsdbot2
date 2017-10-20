@@ -1,5 +1,7 @@
 package org.tsd.rest.v1.tsdtv;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
 import java.util.LinkedList;
 import java.util.List;
 
@@ -31,5 +33,14 @@ public class Series {
 
     public void setEpisodes(List<Episode> episodes) {
         this.episodes = episodes;
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("name", name)
+                .append("seasons", seasons)
+                .append("episodes", episodes)
+                .toString();
     }
 }

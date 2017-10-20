@@ -1,6 +1,10 @@
 package org.tsd.rest.v1.tsdtv;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.tsd.rest.v1.tsdtv.job.JobUpdate;
+
+import java.util.LinkedList;
+import java.util.List;
 
 public class Heartbeat {
 
@@ -9,6 +13,16 @@ public class Heartbeat {
     private Double uploadBitrate;
     private boolean healthy;
     private String unhealthyReason;
+
+    private List<JobUpdate> jobUpdates = new LinkedList<>();
+
+    public List<JobUpdate> getJobUpdates() {
+        return jobUpdates;
+    }
+
+    public void setJobUpdates(List<JobUpdate> jobUpdates) {
+        this.jobUpdates = jobUpdates;
+    }
 
     public boolean isHealthy() {
         return healthy;
@@ -54,10 +68,11 @@ public class Heartbeat {
     public String toString() {
         return new ToStringBuilder(this)
                 .append("agentId", agentId)
-                .append("healthy", healthy)
-                .append("unhealthyReason", unhealthyReason)
                 .append("inventory", inventory)
                 .append("uploadBitrate", uploadBitrate)
+                .append("healthy", healthy)
+                .append("unhealthyReason", unhealthyReason)
+                .append("jobUpdates", jobUpdates)
                 .toString();
     }
 }

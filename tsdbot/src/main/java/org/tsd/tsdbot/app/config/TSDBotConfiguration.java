@@ -54,6 +54,18 @@ public class TSDBotConfiguration extends Configuration {
     @NotNull
     private GoogleConfig google;
 
+    @Valid
+    @NotNull
+    private TSDTVConfig tsdtv;
+
+    public TSDTVConfig getTsdtv() {
+        return tsdtv;
+    }
+
+    public void setTsdtv(TSDTVConfig tsdtv) {
+        this.tsdtv = tsdtv;
+    }
+
     public GoogleConfig getGoogle() {
         return google;
     }
