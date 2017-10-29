@@ -2,9 +2,7 @@ package org.tsd.client;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.methods.*;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
@@ -12,9 +10,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tsd.rest.v1.tsdtv.Heartbeat;
 import org.tsd.rest.v1.tsdtv.HeartbeatResponse;
-import org.tsd.rest.v1.tsdtv.job.JobUpdate;
+import org.tsd.rest.v1.tsdtv.StoppedPlayingNotification;
+import org.tsd.rest.v1.tsdtv.job.Job;
+import org.tsd.rest.v1.tsdtv.job.JobResult;
 
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.net.URL;
 import java.util.concurrent.TimeUnit;
 
@@ -28,10 +29,18 @@ public class TSDBotClient {
     private final HttpClient httpClient;
     private final URL tsdbotUrl;
     private final ObjectMapper objectMapper;
+    private final String agentId;
+    private final String password;
 
-    public TSDBotClient(HttpClient httpClient, URL tsdbotUrl, ObjectMapper objectMapper) {
+    public TSDBotClient(HttpClient httpClient,
+                        URL tsdbotUrl,
+                        String agentId,
+                        String password,
+                        ObjectMapper objectMapper) {
         this.httpClient = httpClient;
         this.tsdbotUrl = tsdbotUrl;
+        this.agentId = agentId;
+        this.password = password;
         this.objectMapper = objectMapper;
     }
 
@@ -53,20 +62,65 @@ public class TSDBotClient {
         }
     }
 
-    public void sendJobUpdate(JobUpdate jobUpdate) throws Exception {
+    public void sendMediaStoppedNotification(int mediaId, boolean error) throws Exception {
+        StoppedPlayingNotification notification = new StoppedPlayingNotification();
+        notification.setAgentId(agentId);
+        notification.setMediaId(mediaId);
+        notification.setError(error);
+
         URIBuilder uriBuilder = new URIBuilder(tsdbotUrl.toURI())
-                .setPath("/job/"+jobUpdate.getJobId());
-        HttpPut put = new HttpPut(uriBuilder.build());
-        put.setEntity(new StringEntity(objectMapper.writeValueAsString(jobUpdate)));
-        put.setHeader("Content-Type", MediaType.APPLICATION_JSON);
-        try (CloseableHttpResponse response = getResponseWithRedundancy(httpClient, put)) {
+                .setPath("/tsdtv/stopped")
+                .addParameter("password", password);
+        HttpPost post = new HttpPost(uriBuilder.build());
+        post.setEntity(new StringEntity(objectMapper.writeValueAsString(notification)));
+        post.setHeader("Content-Type", MediaType.APPLICATION_JSON);
+        try (CloseableHttpResponse response = getResponseWithRedundancy(httpClient, post)) {
             if (response.getStatusLine().getStatusCode()/100 != 2) {
                 String msg = String.format("HTTP error %d: %s",
                         response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase());
                 throw new Exception(msg);
             }
-            String responseString = EntityUtils.toString(response.getEntity());
-            log.debug("Job update successful, received response: {}", responseString);
+        }
+    }
+
+    public Job pollForJob() throws Exception {
+        URIBuilder uriBuilder = new URIBuilder(tsdbotUrl.toURI())
+                .setPath("/job/"+agentId);
+        HttpGet get = new HttpGet(uriBuilder.build());
+        try (CloseableHttpResponse response = getResponseWithRedundancy(httpClient, get)) {
+            if (response.getStatusLine().getStatusCode()/100 != 2) {
+                String msg = String.format("HTTP error %d: %s",
+                        response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase());
+                throw new Exception(msg);
+            }
+            if (response.getStatusLine().getStatusCode() == Response.Status.OK.getStatusCode()) {
+                String responseString = EntityUtils.toString(response.getEntity());
+                Job job = objectMapper.readValue(responseString, Job.class);
+                log.debug("Received job from server: {}", job);
+                return job;
+            }
+            return null;
+        }
+    }
+
+    public void sendJobResult(JobResult result) {
+        try {
+            URIBuilder uriBuilder = new URIBuilder(tsdbotUrl.toURI())
+                    .setPath("/job/" + result.getJobId());
+            HttpPut put = new HttpPut(uriBuilder.build());
+            put.setEntity(new StringEntity(objectMapper.writeValueAsString(result)));
+            put.setHeader("Content-Type", MediaType.APPLICATION_JSON);
+            try (CloseableHttpResponse response = getResponseWithRedundancy(httpClient, put)) {
+                if (response.getStatusLine().getStatusCode() / 100 != 2) {
+                    String msg = String.format("HTTP error %d: %s",
+                            response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase());
+                    throw new Exception(msg);
+                }
+                String responseString = EntityUtils.toString(response.getEntity());
+                log.debug("Job update successful, received response: {}", responseString);
+            }
+        } catch (Exception e) {
+            log.error("Error sending job result: " + result, e);
         }
     }
 

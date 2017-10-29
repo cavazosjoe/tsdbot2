@@ -6,23 +6,20 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
-import java.util.UUID;
-
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY)
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = TSDTVPlayJob.class, name = "TSDTVPlay"),
-        @JsonSubTypes.Type(value = TSDTVStopJob.class, name = "TSDTVStop")})
-public abstract class Job {
+        @JsonSubTypes.Type(value = TSDTVPlayJobResult.class, name = "TSDTVPlayResult"),
+        @JsonSubTypes.Type(value = TSDTVStopJobResult.class, name = "TSDTVStopResult")})
+public abstract class JobResult {
+    protected String jobId;
 
-    protected String id = UUID.randomUUID().toString();
-
-    public String getId() {
-        return id;
+    public String getJobId() {
+        return jobId;
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public void setJobId(String jobId) {
+        this.jobId = jobId;
     }
 
     @Override
@@ -31,17 +28,17 @@ public abstract class Job {
 
         if (o == null || getClass() != o.getClass()) return false;
 
-        Job job = (Job) o;
+        JobResult result = (JobResult) o;
 
         return new EqualsBuilder()
-                .append(id, job.id)
+                .append(jobId, result.jobId)
                 .isEquals();
     }
 
     @Override
     public int hashCode() {
         return new HashCodeBuilder(17, 37)
-                .append(id)
+                .append(jobId)
                 .toHashCode();
     }
 }

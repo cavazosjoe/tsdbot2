@@ -61,6 +61,10 @@ public class TSDTVAgentApplication extends Application<TSDTVAgentConfiguration> 
                         .annotatedWith(Names.named("tsdtvUrl"))
                         .toInstance(tsdtvAgentConfiguration.getTsdtvUrl());
 
+                bind(String.class)
+                        .annotatedWith(Names.named("password"))
+                        .toInstance(tsdtvAgentConfiguration.getPassword());
+
                 File inventoryDirectory;
                 try {
                     inventoryDirectory = new File(tsdtvAgentConfiguration.getInventoryPath());
@@ -96,7 +100,11 @@ public class TSDTVAgentApplication extends Application<TSDTVAgentConfiguration> 
                         .toInstance(executorService);
 
                 HttpClient httpClient = HttpClients.createDefault();
-                TSDBotClient tsdBotClient = new TSDBotClient(httpClient, tsdbotUrl, new ObjectMapper());
+                TSDBotClient tsdBotClient = new TSDBotClient(httpClient,
+                        tsdbotUrl,
+                        tsdtvAgentConfiguration.getAgentId(),
+                        tsdtvAgentConfiguration.getPassword(),
+                        new ObjectMapper());
                 bind(TSDBotClient.class)
                         .toInstance(tsdBotClient);
             }
@@ -106,5 +114,8 @@ public class TSDTVAgentApplication extends Application<TSDTVAgentConfiguration> 
 
         HeartbeatThread heartbeatThread = injector.getInstance(HeartbeatThread.class);
         executorService.submit(heartbeatThread);
+
+        JobPollingThread jobPollingThread = injector.getInstance(JobPollingThread.class);
+        executorService.submit(jobPollingThread);
     }
 }

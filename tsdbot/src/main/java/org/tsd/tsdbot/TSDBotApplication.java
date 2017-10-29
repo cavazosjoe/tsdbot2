@@ -160,6 +160,10 @@ public class TSDBotApplication extends Application<TSDBotConfiguration> {
                         .annotatedWith(Names.named(Constants.Annotations.OWNER))
                         .toInstance(owner.get());
 
+                bind(String.class)
+                        .annotatedWith(Names.named(Constants.Annotations.OWNER_KEY))
+                        .toInstance(configuration.getOwnerKey());
+
                 bind(DiscordUser.class)
                         .annotatedWith(Names.named(Constants.Annotations.SELF))
                         .toInstance(new DiscordUser(api.getYourself()));
@@ -194,6 +198,10 @@ public class TSDBotApplication extends Application<TSDBotConfiguration> {
                 bind(String.class)
                         .annotatedWith(Names.named(Constants.Annotations.S3_RANDOM_FILENAMES_BUCKET))
                         .toInstance(configuration.getAws().getRandomFilenamesBucket());
+
+                bind(String.class)
+                        .annotatedWith(Names.named(Constants.Annotations.S3_TSDTV_IMAGES_BUCKET))
+                        .toInstance(configuration.getAws().getTsdtvQueueImagesBucket());
 
                 bind(FilenameLibrary.class)
                         .to(S3FilenameLibrary.class);

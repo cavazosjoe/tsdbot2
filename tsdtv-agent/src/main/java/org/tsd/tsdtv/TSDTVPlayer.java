@@ -12,20 +12,25 @@ import net.bramp.ffmpeg.job.FFmpegJob;
 import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tsd.client.TSDBotClient;
 import org.tsd.rest.v1.tsdtv.Media;
 
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @Singleton
 public class TSDTVPlayer {
 
     private static final Logger log = LoggerFactory.getLogger(TSDTVPlayer.class);
 
+    private static final long NANNY_SLEEP_PERIOD_SECONDS = 3;
+
     private FFmpegJob runningStream = null;
 
     private final FFmpeg fFmpeg;
     private final FFprobe fFprobe;
     private final String tsdtvUrl;
+    private final TSDBotClient client;
     private final AgentInventory agentInventory;
     private final ExecutorService executorService;
 
@@ -34,12 +39,14 @@ public class TSDTVPlayer {
                        AgentInventory agentInventory,
                        FFmpeg fFmpeg,
                        FFprobe fFprobe,
+                       TSDBotClient client,
                        @Named("tsdtvUrl") String tsdtvUrl) {
         this.fFmpeg = fFmpeg;
         this.fFprobe = fFprobe;
         this.agentInventory = agentInventory;
         this.tsdtvUrl = tsdtvUrl;
         this.executorService = executorService;
+        this.client = client;
     }
 
     public void play(int mediaId) throws Exception {
@@ -51,6 +58,7 @@ public class TSDTVPlayer {
 
         log.info("Found media: {}", media);
         FFmpegOutputBuilder outputBuilder = new FFmpegBuilder()
+                .addExtraArgs("-re") // stream at native frame rate
                 .setInput(media.getMediaInfo().getFilePath())
                 .addOutput(tsdtvUrl)
                 .setFormat("flv")
@@ -67,21 +75,46 @@ public class TSDTVPlayer {
                 .setStrict(FFmpegBuilder.Strict.EXPERIMENTAL);
 
         if (CollectionUtils.isNotEmpty(media.getMediaInfo().getSubtitleStreams())) {
-            outputBuilder.setVideoFilter("subtitles='"+media.getMediaInfo().getFilePath()+"'");
+            outputBuilder.setVideoFilter("subtitles='"+escapeSubtitlePath(media.getMediaInfo().getFilePath())+"'");
         }
 
         FFmpegBuilder builder = outputBuilder.done();
         FFmpegExecutor executor = new FFmpegExecutor(fFmpeg, fFprobe);
-        runningStream = executor.createJob(builder);
+        runningStream = executor.createJob(builder, progress -> {
+            if (progress.isEnd()) {
+                try {
+                    FFmpegJob.State state = runningStream.getState();
+                    log.warn("Stream ended, state = {}", state);
+                    boolean error = !FFmpegJob.State.FINISHED.equals(state);
+                    client.sendMediaStoppedNotification(mediaId, error);
+                } catch (Exception e) {
+                    log.error("Error sending stopped notification to TSDBot", e);
+                }
+            }
+        });
         executorService.submit(runningStream);
-        log.info("Media playing...");
+        log.info("Media playing, waiting to confirm start...");
+        Thread.sleep(TimeUnit.SECONDS.toMillis(NANNY_SLEEP_PERIOD_SECONDS));
+        if (!FFmpegJob.State.RUNNING.equals(runningStream.getState())) {
+            log.error("Stream failed to start, state = {}", runningStream.getState());
+            throw new Exception("Stream failed to start");
+        }
     }
 
     public void stop() {
         if (runningStream != null) {
             log.warn("Stopping stream");
-            runningStream.notify();
+            runningStream.stop();
             log.warn("Stopped stream");
         }
+    }
+
+    private static String escapeSubtitlePath(String filePath) {
+        log.info("Escaping subtitle path: {}", filePath);
+        filePath = filePath.replaceAll("\\\\", "/");
+        filePath = filePath.replaceAll(":", "\\\\:");
+        filePath = filePath.replaceAll("\\.", "\\\\.");
+        log.info("Escaped subtitle path: {}", filePath);
+        return filePath;
     }
 }

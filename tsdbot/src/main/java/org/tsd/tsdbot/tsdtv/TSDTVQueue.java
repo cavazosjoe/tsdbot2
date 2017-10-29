@@ -6,10 +6,14 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tsd.rest.v1.tsdtv.Media;
-import org.tsd.rest.v1.tsdtv.job.Job;
-import org.tsd.rest.v1.tsdtv.job.JobType;
-import org.tsd.rest.v1.tsdtv.queue.NowPlaying;
-import org.tsd.rest.v1.tsdtv.queue.NowPlayingStatus;
+import org.tsd.rest.v1.tsdtv.job.TSDTVPlayJob;
+import org.tsd.rest.v1.tsdtv.job.TSDTVPlayJobResult;
+import org.tsd.rest.v1.tsdtv.job.TSDTVStopJob;
+import org.tsd.rest.v1.tsdtv.queue.QueuedItem;
+import org.tsd.rest.v1.tsdtv.queue.QueuedItemType;
+import org.tsd.tsdbot.Constants;
+import org.tsd.tsdbot.tsdtv.job.JobQueue;
+import org.tsd.tsdbot.tsdtv.job.JobTimeoutException;
 import org.tsd.tsdbot.tsdtv.library.TSDTVLibrary;
 
 import java.util.*;
@@ -21,18 +25,18 @@ public class TSDTVQueue {
 
     private static final Logger log = LoggerFactory.getLogger(TSDTVQueue.class);
 
-    private NowPlaying nowPlaying;
-    private final List<Media> queue = new LinkedList<>();
+    private QueuedItem nowPlaying;
+    private final List<QueuedItem> queue = new LinkedList<>();
 
-    private final AgentRegistry agentRegistry;
     private final TSDTVLibrary library;
+    private final JobQueue jobQueue;
 
     @Inject
     public TSDTVQueue(ExecutorService executorService,
-                      AgentRegistry agentRegistry,
-                      TSDTVLibrary library) {
+                      TSDTVLibrary library,
+                      JobQueue jobQueue) {
         this.library = library;
-        this.agentRegistry = agentRegistry;
+        this.jobQueue = jobQueue;
         executorService.submit(new QueueManagerThread());
     }
 
@@ -44,58 +48,101 @@ public class TSDTVQueue {
         if (queue != null) {
             result.put("queue", queue);
         }
+        log.debug("Built full queue response: {}", result);
         return result;
     }
 
-    public synchronized void add(String agentId, int mediaId)
-            throws MediaNotFoundException, DuplicateMediaQueuedException {
+    public synchronized void add(String agentId, int mediaId) throws TSDTVException {
         log.info("Adding media to queue, agentId={}, mediaId={}", agentId, mediaId);
         Media media = library.findMediaById(agentId, mediaId);
         log.info("Found media: {}", media);
-        if ( (nowPlaying != null && Objects.equals(media, nowPlaying.getMedia())) ||
-                queue.contains(media) ) {
-            log.error("Duplicate media: nowPlaying={}, queue={}", nowPlaying, queue);
-            throw new DuplicateMediaQueuedException(agentId, mediaId);
+
+        if (nowPlaying == null && CollectionUtils.isEmpty(queue)) {
+            // play immediately
+            nowPlaying(media);
+        } else {
+            // try to enqueue
+            if ( (nowPlaying != null && Objects.equals(media, nowPlaying.getMedia())) ||
+                    doesQueueContainMedia(media) ) {
+                log.error("Duplicate media: nowPlaying={}, queue={}", nowPlaying, queue);
+                throw new DuplicateMediaQueuedException(agentId, mediaId);
+            }
+
+            QueuedItem addingItem = new QueuedItem();
+            addingItem.setMedia(media);
+            addingItem.setType(QueuedItemType.fromClass(media.getClass()));
+
+            if (CollectionUtils.isNotEmpty(queue)) {
+                QueuedItem lastItem = queue.get(queue.size() - 1);
+                addingItem.setStartTime(lastItem.getEndTime() + Constants.TSDTV.SCHEDULING_FUDGE_FACTOR_MILLIS);
+            } else {
+                addingItem.setStartTime(nowPlaying.getEndTime() + Constants.TSDTV.SCHEDULING_FUDGE_FACTOR_MILLIS);
+            }
+
+            addingItem.updateEndTime();
+            queue.add(addingItem);
         }
-        queue.add(media);
     }
 
-    public synchronized void confirmStarted(int mediaId) {
-        log.info("Received start confirmation: mediaId={}, nowPlaying={}",
-                mediaId, nowPlaying);
-        if (nowPlaying != null && nowPlaying.getMedia().getId() == mediaId) {
-            nowPlaying.setNowPlayingStatus(NowPlayingStatus.live);
-        }
-    }
-
-    public synchronized void confirmStopped(int mediaId) {
-        log.info("Received stop confirmation: mediaId={}, nowPlaying={}",
-                mediaId, nowPlaying);
-        if (nowPlaying != null && nowPlaying.getMedia().getId() == mediaId) {
-            nowPlaying = null;
-        }
+    private boolean doesQueueContainMedia(Media media) {
+        return queue.stream().map(QueuedItem::getMedia).anyMatch(m -> m.equals(media));
     }
 
     // user action via API
     public synchronized void stopNowPlaying() {
         if (nowPlaying != null) {
             log.info("Stopping nowPlaying: {}", nowPlaying);
-            nowPlaying.setNowPlayingStatus(NowPlayingStatus.stopping);
-            Job stopJob = new Job();
-            stopJob.setType(JobType.tsdtv_stop);
-            agentRegistry.submitJob(nowPlaying.getMedia().getAgentId(), stopJob);
+            TSDTVStopJob stopJob = new TSDTVStopJob();
+            try {
+                jobQueue.submitJob(nowPlaying.getMedia().getAgentId(), stopJob, TimeUnit.SECONDS.toMillis(10));
+            } catch (Exception e) {
+                log.error("Error stopping media " + nowPlaying, e);
+            }
+            this.nowPlaying = null;
         }
     }
 
-    private void setNowPlaying(Media media) {
+    public synchronized void reportStopped(int mediaId) {
+        log.info("Handling stopped notification, mediaId={}, nowPlaying={}", mediaId, nowPlaying);
+        if (nowPlaying != null && nowPlaying.getMedia().getId() == mediaId) {
+            this.nowPlaying = null;
+        }
+    }
+
+    private void nowPlaying(Media media) throws TSDTVException {
         log.info("Setting nowPlaying: {}", media);
-        this.nowPlaying = new NowPlaying();
-        this.nowPlaying.setNowPlayingStatus(NowPlayingStatus.starting);
-        this.nowPlaying.setMedia(media);
-        Job playJob = new Job();
-        playJob.setType(JobType.tsdtv_play);
-        playJob.getParameters().put("mediaId", Integer.toString(nowPlaying.getMedia().getId()));
-        agentRegistry.submitJob(nowPlaying.getMedia().getAgentId(), playJob);
+        TSDTVPlayJob playJob = new TSDTVPlayJob();
+        playJob.setMediaId(media.getId());
+        try {
+            TSDTVPlayJobResult result
+                    = jobQueue.submitJob(media.getAgentId(), playJob, TimeUnit.SECONDS.toMillis(20));
+
+            if (!result.isSuccess()) {
+                throw new TSDTVException("Error playing media");
+            }
+
+            long startedTimeUTC = result.getTimeStarted();
+
+            QueuedItem queuedItem = new QueuedItem();
+            queuedItem.setMedia(media);
+            queuedItem.setType(QueuedItemType.fromClass(media.getClass()));
+            queuedItem.setStartTime(startedTimeUTC);
+            queuedItem.updateEndTime();
+            log.info("Set nowPlaying start/end times, {} -> {}", queuedItem.getStartTime(), queuedItem.getEndTime());
+            this.nowPlaying = queuedItem;
+
+            long lastItemEndTime = queuedItem.getEndTime();
+            for (QueuedItem inQueue : queue) {
+                inQueue.setStartTime(lastItemEndTime + Constants.TSDTV.SCHEDULING_FUDGE_FACTOR_MILLIS);
+                inQueue.updateEndTime();
+                log.info("Set queued media start/end times, mediaId={}, {} -> {}",
+                        inQueue.getMedia().getId(), queuedItem.getStartTime(), queuedItem.getEndTime());
+                lastItemEndTime = inQueue.getEndTime();
+            }
+
+        } catch (JobTimeoutException e) {
+            log.error("Timed out waiting for response to play job");
+        }
     }
 
     class QueueManagerThread implements Runnable {
@@ -106,9 +153,13 @@ public class TSDTVQueue {
             while (!shutdown) {
                 if (nowPlaying == null && CollectionUtils.isNotEmpty(queue)) {
                     synchronized (queue) {
-                        Media media = queue.remove(0);
-                        log.info("Moving queued item to nowPlaying: {}", media);
-                        setNowPlaying(media);
+                        QueuedItem queuedItem = queue.remove(0);
+                        log.info("Moving queued item to nowPlaying: {}", queuedItem.getMedia());
+                        try {
+                            nowPlaying(queuedItem.getMedia());
+                        } catch (Exception e) {
+                            log.error("Error playing media: " + queuedItem.getMedia(), e);
+                        }
                     }
                 }
                 try {

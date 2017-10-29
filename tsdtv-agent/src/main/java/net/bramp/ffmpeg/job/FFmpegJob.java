@@ -34,4 +34,10 @@ public abstract class FFmpegJob implements Runnable {
   public State getState() {
     return state;
   }
+
+  public void stop() {
+    if (this.ffmpeg != null) {
+      ffmpeg.stop();
+    }
+  }
 }

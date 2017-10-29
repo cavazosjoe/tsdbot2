@@ -4,28 +4,60 @@
 
     <script type="text/javascript">
 
+        var buildQueueItemBody = function (queueItem, includeStartTime) {
+            var seriesName = null;
+            var seasonName = null;
+            var type = queueItem.type;
+
+            if (type === 'episode') {
+                if (queueItem.media.seriesName) {
+                    seriesName = queueItem.media.seriesName;
+                }
+                if (queueItem.media.seasonName) {
+                    seasonName = queueItem.media.seasonName;
+                }
+            } else if (type === 'movie') {
+                seriesName = 'Movies';
+            }
+
+            var body = '<h4>';
+
+            if (includeStartTime) {
+                var startTime = moment(queueItem.startTime).format('HH:mm z');
+                body += (startTime + ' - ');
+            }
+
+            body += seriesName;
+
+            if (seasonName) {
+                body += (' ('+seasonName+')');
+            }
+
+            body += ('</h4>'+queueItem.media.name);
+
+            return body;
+        };
+
+        var buildQueueItemImage = function (queueItem) {
+            return '<img class="media-object tsdtvQueueImg" src="/tsdtv/img/'+queueItem.media.id+'"/>';
+        };
+
         (function refresh_now_playing() {
             $.get('/tsdtv/nowPlaying',{},function(responseJson) {
 
-                var nowPlayingSeries = null;
-                var nowPlayingSeason = null;
-                var nowPlayingName = null;
+                console.log("Received nowPlaying: " + JSON.stringify(responseJson));
 
-                if (responseJson.nowPlaying) {
-                    if (responseJson.nowPlaying.media.seriesName) {
-                        nowPlayingSeries = responseJson.nowPlaying.media.seriesName;
-                    }
-                    if (responseJson.nowPlaying.media.seasonName) {
-                        nowPlayingSeason = responseJson.nowPlaying.media.seasonName;
-                    }
-                    nowPlayingName = responseJson.nowPlaying.media.seriesName;
+                var nowPlaying = responseJson.nowPlaying;
+
+                var nowPlayingBody = '<em>Nothing Playing</em>';
+                var nowPlayingImg = '';
+
+                if (nowPlaying) {
+                    nowPlayingBody = buildQueueItemBody(nowPlaying, false);
+                    nowPlayingImg = buildQueueItemImage(nowPlaying);
                 }
 
-                var nowPlayingBody = (!nowPlayingName) ?
-                    '<em>Nothing Playing</em>'
-                    : '<h4>'+nowPlayingSeries+( (nowPlayingSeason) ? ' ('+nowPlayingSeason+')' : '' )+'</h4>' +
-                        ''+nowPlayingName;
-
+                /* Now Playing */
                 var htmlString =
                     '<div class="panel panel-default">' +
                     '   <div class="panel-heading">' +
@@ -35,12 +67,43 @@
                     '       <div id="nowplaying">' +
                     '           <div class="media">' +
                     '               <div class="media-left media-middle">' +
-                    '                   <img class="media-object" src="https://i.imgur.com/OXQrvmy.jpg"/>' +
+                    '                   ' + nowPlayingImg +
                     '               </div>' +
                     '               <div class="media-body">' +
                     '                   '+ nowPlayingBody +
+                    '                   <button type="button" class="btn btn-sm btn-danger" data-toggle="modal" data-target="#stopModal">Kill</button>' +
                     '               </div>' +
                     '           </div>' +
+                    '       </div>' +
+                    '   </div>' +
+                    '</div>';
+
+                /* Queue */
+                htmlString +=
+                    '<div class="panel panel-default">' +
+                    '   <div class="panel-heading">' +
+                    '       <h3 class="panel-title" style="color: #00bc7e"><strong>Up Next</strong></h3>' +
+                    '   </div>' +
+                    '   <div class="panel-body">' +
+                    '       <div id="queue">';
+
+                $.each(responseJson.queue, function(i, queueItem) {
+
+                    var queuedItemBody = buildQueueItemBody(queueItem, true);
+                    var queuedItemImage = buildQueueItemImage(queueItem);
+
+                    htmlString +=
+                        '           <div class="media">' +
+                        '               <div class="media-left media-middle">' +
+                        '                   '+ queuedItemImage +
+                        '               </div>' +
+                        '               <div class="media-body">' +
+                        '                   '+ queuedItemBody +
+                        '               </div>' +
+                        '           </div>';
+                });
+
+                htmlString +=
                     '       </div>' +
                     '   </div>' +
                     '</div>';
@@ -57,28 +120,86 @@
 
                 var htmlString =
                     '<div class="panel panel-default">' +
-                        '<div id="show1-header" class="panel-heading" role="tab">' +
+                        '<div id="movies-header" class="panel-heading" role="tab">' +
                             '<h4 class="panel-title">' +
-                                '<a class="collapsed" data-toggle="collapse" data-parent="#catalog" href="#show1-content" aria-expanded="true" aria-controls="show1-content">Movies</a>' +
+                                '<a class="collapsed" data-toggle="collapse" data-parent="#catalog" href="#movies-content" aria-expanded="true" aria-controls="movies-content">Movies</a>' +
                             '</h4>' +
                         '</div>' +
-                        '<div id="show1-content" class="panel-collapse collapse" role="tabpanel" aria-labelledby="show1-header">' +
+                        '<div id="movies-content" class="panel-collapse collapse" role="tabpanel" aria-labelledby="movies-header">' +
                             '<div class="panel-body">' +
                                 '<ul class="list-group">';
 
                 $.each(responseJson.allMovies, function(i, item) {
                     htmlString +=
-                        '<li class="list-group-item">' +
-                            item.media.name +
-                            '<button class="play" agentId="'+item.agentId+'" mediaId="'+item.media.id+'">Play</button>' +
-                        '</li>';
+                        '           <li class="list-group-item">' +
+                                        item.media.name +
+                        '               <button class="btn btn-sm btn-success play" agentId="'+item.agentId+'" mediaId="'+item.media.id+'">Play</button>' +
+                        '           </li>';
                 });
-
                 htmlString +=
                                 '</ul>' +
                             '</div>' +
                         '</div>' +
                     '</div>';
+
+                // Series
+                $.each(responseJson.allSeries, function(i, seriesItem) {
+                    htmlString +=
+                        '<div class="panel panel-default">' +
+
+                            // individual Series
+                        '   <div id="show'+i+'-header" class="panel-heading" role="tab">' +
+                        '       <h4 class="panel-title">' +
+                        '           <a class="collapsed" data-toggle="collapse" data-parent="#catalog" href="#show'+i+'-content" aria-expanded="true" aria-controls="show'+i+'-content">'+seriesItem.media.name+'</a>' +
+                        '       </h4>' +
+                        '   </div>' +
+                        '   <div id="show'+i+'-content" class="panel-collapse collapse" role="tabpanel" aria-labelledby="show'+i+'-header">' +
+                        '       <div class="panel-body">';
+
+                    // Seasons for series
+                    $.each(seriesItem.media.seasons, function(j, seasonItem) {
+                        htmlString +=
+                                    '<div id="season'+j+'-header" class="panel-heading" role="tab">' +
+                            '           <h4 class="panel-title">' +
+                            '               <a class="collapsed" data-toggle="collapse" data-parent="#show'+i+'-content" href="#season'+j+'-content" aria-expanded="true" aria-controls="season'+j+'-content">'+seasonItem.name+'</a>' +
+                            '           </h4>' +
+                            '        </div>' +
+                            '       <div id="season'+j+'-content" class="panel-collapse collapse" role="tabpanel" aria-labelledby="season'+j+'-header">' +
+                            '           <div class="panel-body">' +
+                            '               <ul class="list-group">';
+
+                        // Episodes for season
+                        $.each(seasonItem.episodes, function(j, episodeItem) {
+                            htmlString +=
+                                '           <li class="list-group-item">' +
+                                                episodeItem.name +
+                                '               <button class="btn btn-sm btn-success play" agentId="'+episodeItem.agentId+'" mediaId="'+episodeItem.id+'">Play</button>' +
+                                '           </li>';
+                        });
+
+                        htmlString +=
+                            '               </ul>' +
+                            '           </div>' +
+                            '       </div> ';
+                    });
+
+
+                    htmlString +=
+                        '           <ul class="list-group">';
+                    // Episodes for series
+                    $.each(seriesItem.media.episodes, function(j, episodeItem) {
+                        htmlString +=
+                            '           <li class="list-group-item">' +
+                                            episodeItem.name +
+                            '               <button class="btn btn-sm btn-success play" agentId="'+seriesItem.agentId+'" mediaId="'+episodeItem.id+'">Play</button>' +
+                            '           </li>';
+                    });
+                    htmlString +=
+                        '           </ul>' +
+                        '       </div>' +
+                        '   </div>' +
+                        '</div>';
+                });
 
                 $("#catalog").html(htmlString).text();
 
@@ -88,6 +209,8 @@
         })();
 
         $(function() {
+
+            // play()
             $(document).on("click", ".play", function() {
                 agentId = $(this).attr('agentId');
                 mediaId = $(this).attr('mediaId');
@@ -117,6 +240,27 @@
                 });
                 event.preventDefault();
             });
+
+            // stop()
+            $("#stopNowPlayingForm").on('submit', function(e) {
+                e.preventDefault();
+                var queryArgs = $("#stopNowPlayingForm").serialize();
+                $.ajax({
+                    type: "POST",
+                    url: '/tsdtv/stop?'+queryArgs,
+                    success: function(response) {
+                        console.log('Success');
+                    },
+                    error: function(xhr, status, error) {
+                        $.bootstrapGrowl(xhr.responseText, {
+                            type: 'danger',
+                            width: 'auto',
+                            allow_dismiss: true
+                        });
+                    }
+                });
+                $('#stopModal').modal('toggle');
+            })
         });
 
     </script>
@@ -245,6 +389,30 @@
                     <iframe src="https://discordapp.com/widget?id=355036967022362635&theme=dark" width="350" height="500" allowtransparency="true" frameborder="0"></iframe>
                 </div>
 
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="stopModal" tabindex="-1" role="dialog" aria-labelledby="control-modal-label" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form id="stopNowPlayingForm">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                        <h4 class="modal-title" id="control-modal-label">Enter Password</h4>
+                    </div>
+                    <div id="control-modal-body" class="modal-body">
+                        <label>
+                            Password
+                            <input type="text" name="password"/>
+                        </label>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-success">Submit</button>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

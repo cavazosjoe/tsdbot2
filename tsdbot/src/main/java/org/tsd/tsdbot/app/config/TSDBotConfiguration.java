@@ -28,6 +28,10 @@ public class TSDBotConfiguration extends Configuration {
 
     @NotEmpty
     @NotNull
+    private String ownerKey;
+
+    @NotEmpty
+    @NotNull
     private String botUrl;
 
     @Valid
@@ -57,6 +61,14 @@ public class TSDBotConfiguration extends Configuration {
     @Valid
     @NotNull
     private TSDTVConfig tsdtv;
+
+    public String getOwnerKey() {
+        return ownerKey;
+    }
+
+    public void setOwnerKey(String ownerKey) {
+        this.ownerKey = ownerKey;
+    }
 
     public TSDTVConfig getTsdtv() {
         return tsdtv;

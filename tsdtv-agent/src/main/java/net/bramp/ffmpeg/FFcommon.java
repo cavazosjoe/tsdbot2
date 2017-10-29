@@ -26,6 +26,8 @@ abstract class FFcommon {
   /** Function to run FFmpeg. We define it like this so we can swap it out (during testing) */
   final ProcessFunction runFunc;
 
+  private Process runningProcess = null;
+
   /** Version string */
   String version = null;
 
@@ -103,7 +105,7 @@ abstract class FFcommon {
 
     Process p = runFunc.run(path(args));
     assert (p != null);
-
+    this.runningProcess = p;
     try {
       // TODO Move the copy onto a thread, so that FFmpegProgressListener can be on this thread.
 
@@ -114,6 +116,17 @@ abstract class FFcommon {
 
     } finally {
       p.destroy();
+      this.runningProcess = null;
+    }
+  }
+
+  public void stop() {
+    if (this.runningProcess != null) {
+      try {
+        this.runningProcess.destroyForcibly();
+      } finally {
+        this.runningProcess = null;
+      }
     }
   }
 }

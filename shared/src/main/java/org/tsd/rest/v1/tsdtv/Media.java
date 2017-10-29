@@ -1,5 +1,8 @@
 package org.tsd.rest.v1.tsdtv;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
 public abstract class Media {
 
     protected int id;
@@ -37,5 +40,25 @@ public abstract class Media {
 
     public void setMediaInfo(MediaInfo mediaInfo) {
         this.mediaInfo = mediaInfo;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Media media = (Media) o;
+
+        return new EqualsBuilder()
+                .append(id, media.id)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+                .append(id)
+                .toHashCode();
     }
 }

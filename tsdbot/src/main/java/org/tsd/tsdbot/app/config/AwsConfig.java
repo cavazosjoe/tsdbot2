@@ -22,6 +22,18 @@ public class AwsConfig {
     @NotNull
     private String randomFilenamesBucket;
 
+    @NotEmpty
+    @NotNull
+    private String tsdtvQueueImagesBucket;
+
+    public String getTsdtvQueueImagesBucket() {
+        return tsdtvQueueImagesBucket;
+    }
+
+    public void setTsdtvQueueImagesBucket(String tsdtvQueueImagesBucket) {
+        this.tsdtvQueueImagesBucket = tsdtvQueueImagesBucket;
+    }
+
     public String getAccessKey() {
         return accessKey;
     }

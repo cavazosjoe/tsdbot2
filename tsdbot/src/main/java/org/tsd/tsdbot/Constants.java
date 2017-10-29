@@ -19,10 +19,12 @@ public class Constants {
         public static final String BITLY_API_KEY = "bitlyApiKey";
         public static final String S3_FILENAMES_BUCKET = "filenamesBucket";
         public static final String S3_RANDOM_FILENAMES_BUCKET = "randomFilenamesBucket";
+        public static final String S3_TSDTV_IMAGES_BUCKET = "tsdtvImagesBucket";
         public static final String MASHAPE_API_KEY = "mashapeApiKey";
         public static final String GOOGLE_GIS_CX = "gisCx";
         public static final String GOOGLE_API_KEY = "googleApiKey";
         public static final String TSDTV_STREAM_URL = "tsdtvStreamUrl";
+        public static final String OWNER_KEY = "ownerKey";
     }
 
     public static class History {
@@ -158,6 +160,11 @@ public class Constants {
     public static class TSDTV {
         public static final long AGENT_HEARTBEAT_PERIOD_MILLIS
                 = TimeUnit.MINUTES.toMillis(5);
+
+        // When calculating the start times of items in the queue, assume they won't start immediately
+        // after the previous show
+        public static final long SCHEDULING_FUDGE_FACTOR_SECONDS = 5;
+        public static final long SCHEDULING_FUDGE_FACTOR_MILLIS = TimeUnit.SECONDS.toMillis(SCHEDULING_FUDGE_FACTOR_SECONDS);
     }
 
     public static class View {

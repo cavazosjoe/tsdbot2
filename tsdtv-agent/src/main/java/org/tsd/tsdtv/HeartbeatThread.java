@@ -8,9 +8,6 @@ import org.tsd.client.TSDBotClient;
 import org.tsd.rest.v1.tsdtv.Heartbeat;
 import org.tsd.rest.v1.tsdtv.HeartbeatResponse;
 import org.tsd.rest.v1.tsdtv.Inventory;
-import org.tsd.rest.v1.tsdtv.job.Job;
-import org.tsd.rest.v1.tsdtv.job.JobUpdate;
-import org.tsd.rest.v1.tsdtv.job.JobUpdateType;
 
 import javax.inject.Inject;
 import java.time.LocalDateTime;
@@ -29,7 +26,6 @@ public class HeartbeatThread implements Runnable {
     private final NetworkMonitor networkMonitor;
     private final TSDBotClient tsdBotClient;
     private final AgentInventory agentInventory;
-    private final TSDTVPlayer player;
 
     private Inventory inventory = null;
     private LocalDateTime inventoryLastSent = LocalDateTime.MIN;
@@ -39,13 +35,11 @@ public class HeartbeatThread implements Runnable {
     public HeartbeatThread(TSDBotClient tsdBotClient,
                            NetworkMonitor networkMonitor,
                            AgentInventory agentInventory,
-                           TSDTVPlayer player,
                            @Named("agentId") String agentId) {
         this.agentId = agentId;
         this.tsdBotClient = tsdBotClient;
         this.networkMonitor = networkMonitor;
         this.agentInventory = agentInventory;
-        this.player = player;
     }
 
     public void run() {
@@ -78,16 +72,10 @@ public class HeartbeatThread implements Runnable {
             try {
                 response = tsdBotClient.sendTsdtvAgentHeartbeat(heartbeat);
                 sleepSeconds = response.getSleepSeconds();
-                for (Job job : response.getJobsToExecute()) {
-                    try {
-                        handleJob(job);
-                    } catch (Exception e) {
-                        log.error("Error handling job " + job, e);
-                    }
-                }
             } catch (Exception e ) {
                 log.error("Error sending heartbeat", e);
                 sleepSeconds = PERIOD_SECONDS;
+                inventoryLastSent = LocalDateTime.MIN;
             }
 
             try {
@@ -96,32 +84,6 @@ public class HeartbeatThread implements Runnable {
             } catch (InterruptedException e) {
                 log.error("Interrupted", e);
                 shutdown = true;
-            }
-        }
-    }
-
-    private void handleJob(Job job) throws Exception {
-        switch (job.getType()) {
-            case tsdtv_play: {
-                int mediaId = Integer.parseInt(job.getParameters().get("mediaId"));
-                player.play(mediaId);
-
-                JobUpdate response = new JobUpdate();
-                response.setJobId(job.getId());
-                response.setJobUpdateType(JobUpdateType.tsdtv_started);
-                response.setData(job.getParameters());
-                tsdBotClient.sendJobUpdate(response);
-                break;
-            }
-            case tsdtv_stop: {
-                player.stop();
-
-                JobUpdate response = new JobUpdate();
-                response.setJobId(job.getId());
-                response.setJobUpdateType(JobUpdateType.tsdtv_stopped);
-                response.setData(job.getParameters());
-                tsdBotClient.sendJobUpdate(response);
-                break;
             }
         }
     }

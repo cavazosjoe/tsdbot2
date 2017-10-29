@@ -1,13 +1,17 @@
 package org.tsd.tsdbot.resources;
 
+import com.google.inject.name.Named;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tsd.rest.v1.tsdtv.Heartbeat;
 import org.tsd.rest.v1.tsdtv.HeartbeatResponse;
 import org.tsd.rest.v1.tsdtv.PlayMediaRequest;
+import org.tsd.rest.v1.tsdtv.StoppedPlayingNotification;
+import org.tsd.tsdbot.Constants;
 import org.tsd.tsdbot.tsdtv.*;
 import org.tsd.tsdbot.tsdtv.library.TSDTVLibrary;
+import org.tsd.tsdbot.util.FileUtils;
 import org.tsd.tsdbot.view.TSDTVView;
 
 import javax.inject.Inject;
@@ -16,6 +20,8 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
+import java.io.IOException;
 
 @Path("/tsdtv")
 public class TSDTVResource {
@@ -25,12 +31,20 @@ public class TSDTVResource {
     private final AgentRegistry agentRegistry;
     private final TSDTVLibrary tsdtvLibrary;
     private final TSDTVQueue tsdtvQueue;
+    private final String ownerKey;
+    private final FileUtils fileUtils;
 
     @Inject
-    public TSDTVResource(AgentRegistry agentRegistry, TSDTVLibrary tsdtvLibrary, TSDTVQueue tsdtvQueue) {
+    public TSDTVResource(AgentRegistry agentRegistry,
+                         TSDTVLibrary tsdtvLibrary,
+                         TSDTVQueue tsdtvQueue,
+                         FileUtils fileUtils,
+                         @Named(Constants.Annotations.OWNER_KEY) String ownerKey) {
         this.agentRegistry = agentRegistry;
         this.tsdtvLibrary = tsdtvLibrary;
         this.tsdtvQueue = tsdtvQueue;
+        this.ownerKey = ownerKey;
+        this.fileUtils = fileUtils;
     }
 
     @GET
@@ -46,6 +60,20 @@ public class TSDTVResource {
     @Path("/listings")
     public Response getListings() {
         return Response.ok(tsdtvLibrary.getListings()).build();
+    }
+
+    @GET
+    @Path("/img/{mediaId}")
+    public Response getQueueImage(@PathParam("mediaId") Integer mediaId) throws IOException, MediaNotFoundException {
+        byte[] data = tsdtvLibrary.getQueueImage(mediaId);
+        String contentType = fileUtils.detectMimeType(data);
+        return Response.ok()
+                .header("Content-Type", contentType)
+                .entity((StreamingOutput) output -> {
+                    output.write(data);
+                    output.flush();
+                })
+                .build();
     }
 
     @GET
@@ -80,24 +108,35 @@ public class TSDTVResource {
         try {
             tsdtvQueue.add(playMediaRequest.getAgentId(), Integer.parseInt(playMediaRequest.getMediaId()));
             return Response.accepted("Accepted").build();
-        } catch (MediaNotFoundException e) {
-            return Response.serverError().entity("Could not find selected media").build();
-        } catch (DuplicateMediaQueuedException e) {
-            return Response.serverError().entity("Media already exists in queue").build();
+        } catch (TSDTVException e) {
+            return Response.serverError().entity(e.getMessage()).build();
         }
     }
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/stop")
-    public Response stop(@Context HttpServletRequest request) {
-        log.info("Received stop instruction");
-        /*
-        Job playMediaJob = new Job();
-        playMediaJob.setType(JobType.tsdtv_play);
-        playMediaJob.getParameters().put("mediaId", playMediaRequest.getMediaId());
-        agentRegistry.submitJob(playMediaRequest.getAgentId(), playMediaJob);
-        */
+    public Response stop(@Context HttpServletRequest request,
+                         @QueryParam("password") String password) {
+        log.info("Received stop instruction, password={}", password);
+        if (!StringUtils.equals(password, ownerKey)) {
+            throw new NotAuthorizedException("Invalid password");
+        }
+        tsdtvQueue.stopNowPlaying();
+        return Response.accepted("Accepted").build();
+    }
+
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/stopped")
+    public Response stopped(@Context HttpServletRequest request,
+                            @QueryParam("password") String password,
+                            StoppedPlayingNotification notification) {
+        log.info("Received stopped notification, password={}: {}", password, notification);
+        if (!StringUtils.equals(password, ownerKey)) {
+            throw new NotAuthorizedException("Invalid password");
+        }
+        tsdtvQueue.reportStopped(notification.getMediaId());
         return Response.accepted("Accepted").build();
     }
 }

@@ -6,12 +6,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tsd.rest.v1.tsdtv.Heartbeat;
 import org.tsd.rest.v1.tsdtv.HeartbeatResponse;
-import org.tsd.rest.v1.tsdtv.job.Job;
 import org.tsd.tsdbot.Constants;
+import org.tsd.tsdbot.tsdtv.job.JobQueue;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -23,12 +26,15 @@ public class AgentRegistry {
     private static final Logger log = LoggerFactory.getLogger(AgentRegistry.class);
 
     private final Map<String, OnlineAgent> onlineAgents = new ConcurrentHashMap<>();
-    private final Map<String, List<Job>> jobQueue = new ConcurrentHashMap<>();
     private final TSDTVAgentDao tsdtvAgentDao;
+    private final JobQueue jobQueue;
 
     @Inject
-    public AgentRegistry(ExecutorService executorService, TSDTVAgentDao tsdtvAgentDao) {
+    public AgentRegistry(ExecutorService executorService,
+                         TSDTVAgentDao tsdtvAgentDao,
+                         JobQueue jobQueue) {
         this.tsdtvAgentDao = tsdtvAgentDao;
+        this.jobQueue = jobQueue;
         executorService.submit(new ConnectedAgentReaper());
     }
 
@@ -49,25 +55,11 @@ public class AgentRegistry {
         tsdtvAgentDao.saveAgent(agent);
 
         onlineAgents.put(agent.getAgentId(), new OnlineAgent(agent, heartbeat));
-        if (!jobQueue.containsKey(agent.getAgentId())) {
-            log.info("Initializing job queue for agent {}", agent.getAgentId());
-            jobQueue.put(agent.getAgentId(), new LinkedList<>());
-        }
 
         HeartbeatResponse response = new HeartbeatResponse();
         response.setSleepSeconds(5);
-        response.setJobsToExecute(new LinkedList<>(jobQueue.get(agent.getAgentId())));
-        jobQueue.get(agent.getAgentId()).clear();
 
         return response;
-    }
-
-    public void submitJob(String agentId, Job job) {
-        log.info("Received job submission: agentId={}, job={}", agentId, job);
-        if (!onlineAgents.containsKey(agentId)) {
-            throw new IllegalArgumentException("No online agent with id " + agentId);
-        }
-        jobQueue.get(agentId).add(job);
     }
 
     public void registerAgent(String agentId) {
@@ -116,7 +108,7 @@ public class AgentRegistry {
                         .collect(Collectors.toList());
                 for (String agentId : expiredAgentIds) {
                     onlineAgents.remove(agentId);
-                    jobQueue.remove(agentId);
+                    jobQueue.handleOfflineAgent(agentId);
                 }
                 try {
                     Thread.sleep(TimeUnit.SECONDS.toMillis(10));

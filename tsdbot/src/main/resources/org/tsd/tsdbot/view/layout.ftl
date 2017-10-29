@@ -15,8 +15,14 @@
             <!--VideoJS CSS-->
             <link href="http://vjs.zencdn.net/6.2.8/video-js.css" rel="stylesheet">
 
+            <!--TSDTV CSS-->
+            <link href="/assets/css/tsdtv.css" rel="stylesheet">
+
             <!--jQuery-->
             <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+            <!--moment.js-->
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.19.1/moment.min.js"></script>
 
             <!--Bootstrap Growl-->
             <script src="/assets/js/bootstrap-growl.min.js"></script>

@@ -31,6 +31,18 @@ public class TSDTVAgentConfiguration extends Configuration {
     @NotEmpty
     private String ffprobe;
 
+    @NotNull
+    @NotEmpty
+    private String password;
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
     public String getTsdtvUrl() {
         return tsdtvUrl;
     }
