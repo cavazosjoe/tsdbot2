@@ -1,5 +1,6 @@
 package org.tsd.rest.v1.tsdtv;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 public class Episode extends Media {
@@ -9,7 +10,18 @@ public class Episode extends Media {
     private String seriesName;
     private Integer episodeNumber;
 
+    @JsonIgnore
+    private Integer overriddenEpisodeNumber;
+
     public Episode() {
+    }
+
+    public Integer getOverriddenEpisodeNumber() {
+        return overriddenEpisodeNumber;
+    }
+
+    public void setOverriddenEpisodeNumber(Integer overriddenEpisodeNumber) {
+        this.overriddenEpisodeNumber = overriddenEpisodeNumber;
     }
 
     public Episode(String agentId, MediaInfo mediaInfo) {
@@ -58,6 +70,7 @@ public class Episode extends Media {
                 .append("id", id)
                 .append("agentId", agentId)
                 .append("mediaInfo", mediaInfo)
+                .append("overriddenEpisodeNumber", overriddenEpisodeNumber)
                 .toString();
     }
 }

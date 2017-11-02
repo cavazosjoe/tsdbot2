@@ -36,10 +36,10 @@ public class DeejHandler extends MessageHandler<DiscordChannel> {
     }
 
     @Override
-    public void doHandle(DiscordMessage<DiscordChannel> message) throws Exception {
+    public void doHandle(DiscordMessage<DiscordChannel> message, DiscordChannel channel) throws Exception {
         log.info("Handling deej: channel={}, message={}", message.getRecipient().getName(), message.getContent());
 
-        HistoryRequest<DiscordChannel> request = HistoryRequest.create(message.getRecipient(), message)
+        HistoryRequest<DiscordChannel> request = HistoryRequest.create(channel, message)
                 .withFilter(filterFactory.createNoFunctionsFilter())
                 .withFilter(filterFactory.createNoOwnMessagesFilter())
                 .withFilter(filterFactory.createNoUrlsFilter());
@@ -50,7 +50,7 @@ public class DeejHandler extends MessageHandler<DiscordChannel> {
             if (decorator != null) {
                 String result = String.format(decorator, random.getContent());
                 log.info("Deejified: {}", result);
-                message.getRecipient().sendMessage(result);
+                channel.sendMessage(result);
             }
         }
     }

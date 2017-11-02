@@ -1,0 +1,32 @@
+{
+  "scheduledBlocks": [
+    {
+    "id": "weeaboo",
+    "cronString": "0 0 18 ? * MON-THU",
+    "name": "Weeaboo Weeknights",
+    "scheduledItems": [
+      {
+        "series": "Outlaw_Star",
+        "commercialBreakMinutes": 2
+      },
+      {
+        "series": "Yu_Yu_Hakusho",
+        "commercialBreakMinutes": 2
+      },
+      {
+        "series": "Gundam_Wing",
+        "commercialBreakMinutes": 2
+      },
+      {
+        "series": "One_Punch_Man",
+        "commercialBreakMinutes": 2
+      },
+      {
+        "series": "Ghost_in_the_Shell",
+        "season": "2nd_GIG",
+        "commercialBreakMinutes": 2
+      }
+    ]
+    }
+  ]
+}

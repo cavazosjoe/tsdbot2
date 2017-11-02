@@ -48,15 +48,15 @@ public class FilenameHandler extends MessageHandler<DiscordChannel> {
 
 
     @Override
-    public void doHandle(DiscordMessage<DiscordChannel> message) throws Exception {
+    public void doHandle(DiscordMessage<DiscordChannel> message, DiscordChannel channel) throws Exception {
         log.info("Handling filename: channel={}, message={}",
-                message.getRecipient().getName(), message.getContent());
+                channel.getName(), message.getContent());
 
         String[] words = message.getContent().toLowerCase().split("\\s+");
 
         if (words.length == 1) {
             Filename filename = filenameLibrary.getRandomRealFilename();
-            message.getRecipient().sendMessage(buildFilenameUrl(filename, false));
+            channel.sendMessage(buildFilenameUrl(filename, false));
         } else if (words.length >= 2) {
             String subCmd = words[1];
             switch (subCmd) {

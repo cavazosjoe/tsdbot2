@@ -24,7 +24,19 @@ public class AwsConfig {
 
     @NotEmpty
     @NotNull
+    private String tsdtvBucket;
+
+    @NotEmpty
+    @NotNull
     private String tsdtvQueueImagesBucket;
+
+    public String getTsdtvBucket() {
+        return tsdtvBucket;
+    }
+
+    public void setTsdtvBucket(String tsdtvBucket) {
+        this.tsdtvBucket = tsdtvBucket;
+    }
 
     public String getTsdtvQueueImagesBucket() {
         return tsdtvQueueImagesBucket;

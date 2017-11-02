@@ -19,6 +19,7 @@ public class Constants {
         public static final String BITLY_API_KEY = "bitlyApiKey";
         public static final String S3_FILENAMES_BUCKET = "filenamesBucket";
         public static final String S3_RANDOM_FILENAMES_BUCKET = "randomFilenamesBucket";
+        public static final String S3_TSDTV_BUCKET = "tsdtvBucket";
         public static final String S3_TSDTV_IMAGES_BUCKET = "tsdtvImagesBucket";
         public static final String MASHAPE_API_KEY = "mashapeApiKey";
         public static final String GOOGLE_GIS_CX = "gisCx";
@@ -157,7 +158,13 @@ public class Constants {
         public static final String NOT_AUTHORIZED_MESSAGE = "You don't have permission to do that";
     }
 
+    public static class Scheduler {
+        public static final String TSDTV_GROUP_ID = "tsdtv";
+    }
+
     public static class TSDTV {
+        public static final String COMMAND_PREFIX = ".tsdtv";
+
         public static final long AGENT_HEARTBEAT_PERIOD_MILLIS
                 = TimeUnit.MINUTES.toMillis(5);
 

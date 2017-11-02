@@ -47,9 +47,7 @@ import org.tsd.tsdbot.odb.OdbItem;
 import org.tsd.tsdbot.odb.OdbItemDao;
 import org.tsd.tsdbot.printout.PrintoutLibrary;
 import org.tsd.tsdbot.resources.*;
-import org.tsd.tsdbot.tsdtv.AgentRegistry;
-import org.tsd.tsdbot.tsdtv.TSDTVAgent;
-import org.tsd.tsdbot.tsdtv.TSDTVAgentDao;
+import org.tsd.tsdbot.tsdtv.*;
 import org.tsd.tsdbot.tsdtv.library.TSDTVLibrary;
 import twitter4j.Twitter;
 import twitter4j.TwitterFactory;
@@ -67,7 +65,8 @@ public class TSDBotApplication extends Application<TSDBotConfiguration> {
 
     private final HibernateBundle<TSDBotConfiguration> hibernate = new HibernateBundle<TSDBotConfiguration>(
             OdbItem.class,
-            TSDTVAgent.class) {
+            TSDTVAgent.class,
+            TSDTVEpisodicItem.class) {
         @Override
         public DataSourceFactory getDataSourceFactory(TSDBotConfiguration configuration) {
             return configuration.getDatabase();
@@ -200,6 +199,10 @@ public class TSDBotApplication extends Application<TSDBotConfiguration> {
                         .toInstance(configuration.getAws().getRandomFilenamesBucket());
 
                 bind(String.class)
+                        .annotatedWith(Names.named(Constants.Annotations.S3_TSDTV_BUCKET))
+                        .toInstance(configuration.getAws().getTsdtvBucket());
+
+                bind(String.class)
                         .annotatedWith(Names.named(Constants.Annotations.S3_TSDTV_IMAGES_BUCKET))
                         .toInstance(configuration.getAws().getTsdtvQueueImagesBucket());
 
@@ -219,6 +222,11 @@ public class TSDBotApplication extends Application<TSDBotConfiguration> {
                         .create(TSDTVAgentDao.class, SessionFactory.class, hibernate.getSessionFactory());
                 bind(TSDTVAgentDao.class)
                         .toInstance(tsdtvAgentDao);
+
+                TSDTVEpisodicItemDao tsdtvEpisodicItemDao = proxyFactory
+                        .create(TSDTVEpisodicItemDao.class, SessionFactory.class, hibernate.getSessionFactory());
+                bind(TSDTVEpisodicItemDao.class)
+                        .toInstance(tsdtvEpisodicItemDao);
 
                 bind(AgentRegistry.class);
                 bind(TSDTVLibrary.class);
@@ -242,7 +250,8 @@ public class TSDBotApplication extends Application<TSDBotConfiguration> {
                 injector.getInstance(GvHandler.class),
                 injector.getInstance(HustleHandler.class),
                 injector.getInstance(PrintoutHandler.class),
-                injector.getInstance(OmniDatabaseHandler.class));
+                injector.getInstance(OmniDatabaseHandler.class),
+                injector.getInstance(TSDTVHandler.class));
 
         List<MessageFilter> messageFilters = Arrays.asList(
                 injector.getInstance(HustleFilter.class));

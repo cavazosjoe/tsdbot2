@@ -36,11 +36,11 @@ public class GvHandler extends MessageHandler<DiscordChannel> {
     }
 
     @Override
-    public void doHandle(DiscordMessage<DiscordChannel> message) throws Exception {
+    public void doHandle(DiscordMessage<DiscordChannel> message, DiscordChannel channel) throws Exception {
         log.info("Handling gv: channel={}, message={}",
-                message.getRecipient().getName(), message.getContent());
+                channel.getName(), message.getContent());
 
-        HistoryRequest<DiscordChannel> request = HistoryRequest.create(message.getRecipient(), message)
+        HistoryRequest<DiscordChannel> request = HistoryRequest.create(channel, message)
                 .withFilter(filterFactory.createNoFunctionsFilter())
                 .withFilter(filterFactory.createNoOwnMessagesFilter())
                 .withFilter(filterFactory.createNoUrlsFilter());
@@ -49,8 +49,8 @@ public class GvHandler extends MessageHandler<DiscordChannel> {
         if (random != null) {
             String response = MiscUtils.getRandomItemInList(Constants.GV.RESPONSES);
             String quote = String.format("<%s> %s", random.getAuthor().getName(), random.getContent());
-            message.getRecipient().sendMessage(quote);
-            message.getRecipient().sendMessage(response);
+            channel.sendMessage(quote);
+            channel.sendMessage(response);
         }
     }
 }

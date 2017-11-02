@@ -32,9 +32,9 @@ public class ChooseHandler extends MessageHandler<DiscordChannel> {
     }
 
     @Override
-    public void doHandle(DiscordMessage<DiscordChannel> message) throws Exception {
+    public void doHandle(DiscordMessage<DiscordChannel> message, DiscordChannel channel) throws Exception {
         log.info("Handling choose: channel={}, message={}",
-                message.getRecipient().getName(), message.getContent());
+                channel.getName(), message.getContent());
 
         String input = substringAfter(message.getContent(), PREFIX).trim();
         log.info("Parsed input: {}", input);
@@ -43,7 +43,7 @@ public class ChooseHandler extends MessageHandler<DiscordChannel> {
             if (contains(input, delimiter)) {
                 log.info("Using delimiter: {}", delimiter);
                 String result = choose(input, delimiter);
-                message.getRecipient().sendMessage(result);
+                channel.sendMessage(result);
             }
         }
     }
@@ -60,5 +60,4 @@ public class ChooseHandler extends MessageHandler<DiscordChannel> {
         log.info("Chosen: {}", choice);
         return MiscUtils.formatRandom(choice, Constants.Choose.OUTPUT_FORMATS);
     }
-
 }

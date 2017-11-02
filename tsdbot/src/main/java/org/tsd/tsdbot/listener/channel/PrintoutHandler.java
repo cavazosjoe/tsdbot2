@@ -44,16 +44,16 @@ public class PrintoutHandler extends MessageHandler<DiscordChannel> {
     }
 
     @Override
-    public void doHandle(DiscordMessage<DiscordChannel> message) throws Exception {
+    public void doHandle(DiscordMessage<DiscordChannel> message, DiscordChannel channel) throws Exception {
         log.info("Handling printout: channel={}, message={}",
-                message.getRecipient().getName(), message.getContent());
+                channel.getName(), message.getContent());
 
         if (printoutLibrary.isUserPendingComputing(message.getAuthor())) {
             String input = splitAndCombine(message.getContent());
             String capitalized = input.toUpperCase();
             if (StringUtils.equals(input, capitalized)) {
                 String printoutId = printoutLibrary.generatePrintout(input);
-                message.getRecipient().sendMessage(buildUrlForPrintout(printoutId));
+                channel.sendMessage(buildUrlForPrintout(printoutId));
                 printoutLibrary.removeUserNotComputing(message.getAuthor());
             }
         } else {
@@ -61,11 +61,11 @@ public class PrintoutHandler extends MessageHandler<DiscordChannel> {
             if (matcher.find()) {
                 if (RandomUtils.nextDouble(0.0, 1.0) > 0.8) {
                     printoutLibrary.addUserNotComputing(message.getAuthor());
-                    message.getRecipient().sendMessage("Not computing. Please repeat.");
+                    channel.sendMessage("Not computing. Please repeat.");
                 } else {
                     String query = matcher.group(1);
                     String printoutId = printoutLibrary.generatePrintout(query);
-                    message.getRecipient().sendMessage(buildUrlForPrintout(printoutId));
+                    channel.sendMessage(buildUrlForPrintout(printoutId));
                 }
             }
         }

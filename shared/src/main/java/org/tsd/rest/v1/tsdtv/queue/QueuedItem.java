@@ -9,6 +9,15 @@ public class QueuedItem {
     private QueuedItemType type;
     private long startTime;
     private long endTime;
+    private Integer effectiveEpisodeNumber;
+
+    public Integer getEffectiveEpisodeNumber() {
+        return effectiveEpisodeNumber;
+    }
+
+    public void setEffectiveEpisodeNumber(Integer effectiveEpisodeNumber) {
+        this.effectiveEpisodeNumber = effectiveEpisodeNumber;
+    }
 
     public QueuedItemType getType() {
         return type;
@@ -53,6 +62,7 @@ public class QueuedItem {
                 .append("type", type)
                 .append("startTime", startTime)
                 .append("endTime", endTime)
+                .append("effectiveEpisodeNumber", effectiveEpisodeNumber)
                 .toString();
     }
 }

@@ -14,12 +14,12 @@ public abstract class MessageHandler<T extends MessageRecipient> {
 
     public final boolean handle(DiscordMessage<T> message) throws Exception {
         if (isValid(message)) {
-            doHandle(message);
+            doHandle(message, message.getRecipient());
             return true;
         }
         return false;
     }
 
     public abstract boolean isValid(DiscordMessage<T> message);
-    public abstract void doHandle(DiscordMessage<T> message) throws Exception;
+    public abstract void doHandle(DiscordMessage<T> message, T recipient) throws Exception;
 }

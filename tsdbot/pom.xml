@@ -21,6 +21,7 @@
 
   <properties>
     <mainClass>org.tsd.tsdbot.TSDBotApplication</mainClass>
+    <quartzVersion>2.2.1</quartzVersion>
   </properties>
 
   <dependencyManagement>
@@ -129,6 +130,18 @@
       <groupId>org.imgscalr</groupId>
       <artifactId>imgscalr-lib</artifactId>
       <version>4.2</version>
+    </dependency>
+
+    <!--Quartz-->
+    <dependency>
+      <groupId>org.quartz-scheduler</groupId>
+      <artifactId>quartz</artifactId>
+      <version>${quartzVersion}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.quartz-scheduler</groupId>
+      <artifactId>quartz-jobs</artifactId>
+      <version>${quartzVersion}</version>
     </dependency>
 
   </dependencies>

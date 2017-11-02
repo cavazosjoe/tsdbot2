@@ -70,15 +70,15 @@ public class ReplaceHandler extends MessageHandler<DiscordChannel> {
     }
 
     @Override
-    public void doHandle(DiscordMessage<DiscordChannel> message) throws Exception {
+    public void doHandle(DiscordMessage<DiscordChannel> message, DiscordChannel channel) throws Exception {
         log.info("Handling replace: channel={}, message={}", message.getRecipient(), message.getContent());
-        HistoryRequest<DiscordChannel> request = HistoryRequest.create(message.getRecipient(), message);
+        HistoryRequest<DiscordChannel> request = HistoryRequest.create(channel, message);
         List<DiscordMessage<DiscordChannel>> messages = historyCache.getChannelHistory(request);
         log.info("Retrieved {} messages in channel history", messages.size());
         String result = tryStringReplace(messages, message.getContent());
         if (StringUtils.isNotBlank(result)) {
             log.info("Replace result: \"{}\" -> \"{}\"", message.getContent(), result);
-            message.getRecipient().sendMessage(result);
+            channel.sendMessage(result);
         }
     }
 }

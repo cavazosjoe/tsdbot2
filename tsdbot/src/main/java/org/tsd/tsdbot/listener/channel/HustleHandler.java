@@ -42,9 +42,9 @@ public class HustleHandler extends MessageHandler<DiscordChannel> {
     }
 
     @Override
-    public void doHandle(DiscordMessage<DiscordChannel> message) throws Exception {
+    public void doHandle(DiscordMessage<DiscordChannel> message, DiscordChannel channel) throws Exception {
         String hhr = new DecimalFormat("##0.00").format(hustle.getCurrentHhr());
         String text = String.format("Current hustle/hate ratio: %s -- %s", hhr, hustleUrl);
-        message.getRecipient().sendMessage(text);
+        channel.sendMessage(text);
     }
 }

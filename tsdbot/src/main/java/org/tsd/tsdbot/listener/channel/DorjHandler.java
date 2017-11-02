@@ -34,12 +34,12 @@ public class DorjHandler extends MessageHandler<DiscordChannel> {
     }
 
     @Override
-    public void doHandle(DiscordMessage<DiscordChannel> message) throws Exception {
+    public void doHandle(DiscordMessage<DiscordChannel> message, DiscordChannel channel) throws Exception {
         log.info("Handling dorj: channel={}, message={}", message.getRecipient(), message.getContent());
 
         DorjThread existingThread = threadManager.getChannelThread(DorjThread.class, message.getRecipient());
         if (existingThread == null) {
-            DorjThread newThread = channelThreadFactory.createDorjThread(message.getRecipient(), message.getAuthor());
+            DorjThread newThread = channelThreadFactory.createDorjThread(channel, message.getAuthor());
             threadManager.addThread(newThread);
         } else {
             existingThread.addSummoner(message.getAuthor());

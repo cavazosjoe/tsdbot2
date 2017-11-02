@@ -19,3 +19,12 @@ CREATE TABLE TSDTVAgent (
   INDEX (agentId),
   INDEX (status)
 ) ENGINE=InnoDB, CHARSET=utf8;
+
+CREATE TABLE TSDTVEpisodicItem (
+  id VARCHAR(36) NOT NULL PRIMARY KEY,
+  seriesName VARCHAR(255) NOT NULL,
+  seasonName VARCHAR(255),
+  CONSTRAINT UNIQUE (seriesName, seasonName),
+  INDEX (seriesName),
+  INDEX (seasonName)
+) ENGINE=InnoDB, CHARSET=utf8;

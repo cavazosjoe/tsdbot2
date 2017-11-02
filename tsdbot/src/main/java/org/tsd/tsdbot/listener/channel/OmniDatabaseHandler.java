@@ -41,9 +41,9 @@ public class OmniDatabaseHandler extends MessageHandler<DiscordChannel> {
     }
 
     @Override
-    public void doHandle(DiscordMessage<DiscordChannel> message) throws Exception {
+    public void doHandle(DiscordMessage<DiscordChannel> message, DiscordChannel channel) throws Exception {
         log.info("Handling odb: channel={}, message={}",
-                message.getRecipient().getName(), message.getContent());
+                channel.getName(), message.getContent());
 
         String input = substringAfter(message.getContent(), Constants.OmniDatabase.COMMAND_PREFIX).trim();
         String[] parts = input.split("\\s+");
@@ -74,11 +74,11 @@ public class OmniDatabaseHandler extends MessageHandler<DiscordChannel> {
                     break;
                 }
                 default: {
-                    message.getRecipient().sendMessage("USAGE: .odb (add <#tag1> <#tag2> <item>) | ");
+                    channel.sendMessage("USAGE: .odb (add <#tag1> <#tag2> <item>) | ");
                 }
             }
         } catch (OmniDbException e) {
-            message.getRecipient().sendMessage("Error: " + e.getMessage());
+            channel.sendMessage("Error: " + e.getMessage());
         }
     }
 
