@@ -66,7 +66,7 @@ public class TSDTVQueue {
         return result;
     }
 
-    private synchronized boolean add(String agentId, int mediaId) throws TSDTVException {
+    public synchronized boolean add(String agentId, int mediaId) throws TSDTVException {
         log.info("Adding media to queue, agentId={}, mediaId={}", agentId, mediaId);
         Media media = library.findMediaById(agentId, mediaId);
         log.info("Found media: {}", media);
