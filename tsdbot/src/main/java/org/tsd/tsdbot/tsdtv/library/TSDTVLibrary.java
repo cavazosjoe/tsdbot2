@@ -10,24 +10,26 @@ import com.google.common.cache.LoadingCache;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
+import net.bramp.ffmpeg.FFprobe;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tsd.rest.v1.tsdtv.Episode;
-import org.tsd.rest.v1.tsdtv.Media;
-import org.tsd.rest.v1.tsdtv.Movie;
-import org.tsd.rest.v1.tsdtv.Series;
+import org.tsd.rest.v1.tsdtv.*;
 import org.tsd.tsdbot.Constants;
 import org.tsd.tsdbot.tsdtv.AgentRegistry;
 import org.tsd.tsdbot.tsdtv.MediaNotFoundException;
 import org.tsd.tsdbot.tsdtv.OnlineAgent;
+import org.tsd.util.FfmpegUtil;
 
+import java.io.File;
 import java.io.IOException;
-import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
+import java.nio.file.Files;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -37,23 +39,33 @@ public class TSDTVLibrary {
 
     private static final Logger log = LoggerFactory.getLogger(TSDTVLibrary.class);
 
+    private final ExecutorService executorService;
     private final AgentRegistry agentRegistry;
     private final String streamUrl;
-    private final String tsdtvImagesBucket;
     private final AmazonS3 s3Client;
+    private final String tsdtvCommercialsBucket;
+    private final FFprobe fFprobe;
 
     // mediaId -> image data
     private final LoadingCache<Integer, byte[]> queueImageCache;
 
+    private final List<String> allCommercials;
+    private final Map<String, Commercial> loadedCommercials = new ConcurrentHashMap<>();
+
     @Inject
     public TSDTVLibrary(AgentRegistry agentRegistry,
                         AmazonS3 s3Client,
+                        ExecutorService executorService,
+                        FFprobe fFprobe,
                         @Named(Constants.Annotations.S3_TSDTV_IMAGES_BUCKET) String tsdtvImagesBucket,
+                        @Named(Constants.Annotations.S3_TSDTV_COMMERCIALS_BUCKET) String tsdtvCommercialsBucket,
                         @Named(Constants.Annotations.TSDTV_STREAM_URL) String streamUrl) {
         this.agentRegistry = agentRegistry;
         this.streamUrl = streamUrl;
-        this.tsdtvImagesBucket = tsdtvImagesBucket;
         this.s3Client = s3Client;
+        this.executorService = executorService;
+        this.tsdtvCommercialsBucket = tsdtvCommercialsBucket;
+        this.fFprobe = fFprobe;
 
         this.queueImageCache = CacheBuilder.newBuilder()
                 .expireAfterWrite(30, TimeUnit.MINUTES)
@@ -98,6 +110,23 @@ public class TSDTVLibrary {
                         return IOUtils.toByteArray(object.getObjectContent());
                     }
                 });
+
+        this.allCommercials = s3Client.listObjectsV2(tsdtvCommercialsBucket)
+                .getObjectSummaries()
+                .stream()
+                .map(S3ObjectSummary::getKey)
+                .collect(Collectors.toList());
+        Collections.shuffle(allCommercials);
+
+        executorService.submit(new CommercialLoaderThread());
+    }
+
+    public Commercial getCommercial() {
+        synchronized (loadedCommercials) {
+            List<String> keys = new LinkedList<>(loadedCommercials.keySet());
+            Collections.shuffle(keys);
+            return loadedCommercials.remove(keys.get(0));
+        }
     }
 
     public TSDTVListing getListings() {
@@ -169,5 +198,38 @@ public class TSDTVLibrary {
 
     public String getStreamUrl() {
         return streamUrl;
+    }
+
+    class CommercialLoaderThread extends Thread {
+        private boolean shutdown = false;
+
+        @Override
+        public void run() {
+            while (!shutdown) {
+
+                if (loadedCommercials.size() < 10) {
+                    String commercialToLoad = allCommercials.remove(0);
+                    try {
+                        S3Object object = s3Client.getObject(tsdtvCommercialsBucket, commercialToLoad);
+                        File tempFile = Files.createTempFile(RandomStringUtils.randomAlphabetic(10), ".tmp").toFile();
+                        FileUtils.copyInputStreamToFile(object.getObjectContent(), tempFile);
+                        Commercial commercial = new Commercial(object.getKey(), FfmpegUtil.getMediaInfo(fFprobe, tempFile));
+                        synchronized (loadedCommercials) {
+                            loadedCommercials.put(commercialToLoad, commercial);
+                        }
+                        allCommercials.add(commercialToLoad);
+                    } catch (Exception e) {
+                        log.error("Error loading commercial " + commercialToLoad, e);
+                    }
+                }
+
+                try {
+                    Thread.sleep(TimeUnit.SECONDS.toMillis(2));
+                } catch (Exception e) {
+                    log.error("Interrupted");
+                    shutdown = true;
+                }
+            }
+        }
     }
 }

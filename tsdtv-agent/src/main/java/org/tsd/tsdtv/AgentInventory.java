@@ -3,16 +3,10 @@ package org.tsd.tsdtv;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import net.bramp.ffmpeg.FFprobe;
-import net.bramp.ffmpeg.probe.FFmpegFormat;
-import net.bramp.ffmpeg.probe.FFmpegProbeResult;
-import net.bramp.ffmpeg.probe.FFmpegStream;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tsd.rest.v1.tsdtv.*;
-import org.tsd.rest.v1.tsdtv.stream.AudioStream;
-import org.tsd.rest.v1.tsdtv.stream.SubtitleStream;
-import org.tsd.rest.v1.tsdtv.stream.VideoStream;
+import org.tsd.util.FfmpegUtil;
 
 import javax.inject.Inject;
 import java.io.File;
@@ -25,12 +19,12 @@ public class AgentInventory {
 
     private static final Logger log = LoggerFactory.getLogger(AgentInventory.class);
 
-    private static final String LANGUAGE_TAG = "language";
-
     private final File inventoryDirectory;
     private final FFprobe fFprobe;
     private final String agentId;
     private final Map<Integer, Media> filesById = new HashMap<>();
+
+    private final Set<File> invalidFiles = new HashSet<>();
 
     @Inject
     public AgentInventory(@Named("inventory") File inventoryDirectory,
@@ -64,6 +58,7 @@ public class AgentInventory {
                     filesById.put(movie.getId(), movie);
                 } catch (Exception e) {
                     log.error("Error building movie from file: "+file.getAbsolutePath(), e);
+                    invalidFiles.add(file);
                 }
             }
         }
@@ -94,6 +89,7 @@ public class AgentInventory {
                     series.getEpisodes().add(episode);
                 } catch (Exception e) {
                     log.error("Error building episode for series: "+file.getAbsolutePath(), e);
+                    invalidFiles.add(file);
                 }
             }
         }
@@ -118,6 +114,7 @@ public class AgentInventory {
                     season.getEpisodes().add(episode);
                 } catch (Exception e) {
                     log.error("Error building episode for season: "+file.getAbsolutePath(), e);
+                    invalidFiles.add(file);
                 }
             }
         }
@@ -126,7 +123,7 @@ public class AgentInventory {
     }
 
     private Episode buildEpisode(File file, int episodeNumber) throws IOException {
-        MediaInfo mediaInfo = getMediaInfo(file);
+        MediaInfo mediaInfo = FfmpegUtil.getMediaInfo(fFprobe, file);
         Episode episode = new Episode(agentId, mediaInfo);
         episode.setName(file.getName());
         episode.setEpisodeNumber(episodeNumber);
@@ -137,85 +134,14 @@ public class AgentInventory {
     }
 
     private Movie buildMovie(File file) throws IOException {
-        MediaInfo mediaInfo = getMediaInfo(file);
+        MediaInfo mediaInfo = FfmpegUtil.getMediaInfo(fFprobe, file);
         Movie movie = new Movie(agentId, mediaInfo);
         movie.setName(file.getName());
         log.info("Built movie, file={}: {}", file.getAbsolutePath(), movie);
         return movie;
     }
 
-    private MediaInfo getMediaInfo(File file) throws IOException {
-        log.info("Getting media info for file: {}", file);
-        FFmpegProbeResult probeResult = fFprobe.probe(file.getAbsolutePath());
-        FFmpegFormat format = probeResult.getFormat();
-
-        MediaInfo mediaInfo = new MediaInfo();
-        mediaInfo.setFilePath(file.getAbsolutePath());
-        mediaInfo.setFileSize(format.size);
-        mediaInfo.setDurationSeconds((int)format.duration);
-        mediaInfo.setBitRate(format.bit_rate);
-
-        for (FFmpegStream fFmpegStream : probeResult.getStreams()) {
-            if (fFmpegStream.codec_type != null) {
-                switch (fFmpegStream.codec_type) {
-                    case VIDEO: {
-                        VideoStream videoStream = new VideoStream();
-                        populateStreamInfo(videoStream, fFmpegStream);
-                        videoStream.setWidth(fFmpegStream.width);
-                        videoStream.setHeight(fFmpegStream.height);
-                        videoStream.setSampleAspectRatio(fFmpegStream.sample_aspect_ratio);
-                        videoStream.setDisplayAspectRatio(fFmpegStream.display_aspect_ratio);
-                        videoStream.setPixFmt(fFmpegStream.pix_fmt);
-                        videoStream.setAvc(Boolean.parseBoolean(fFmpegStream.is_avc));
-                        videoStream.setrFrameRate(fFmpegStream.r_frame_rate.doubleValue());
-                        videoStream.setAvgFrameRate(fFmpegStream.avg_frame_rate.doubleValue());
-                        log.info("Parsed video stream: {}", videoStream);
-                        mediaInfo.getVideoStreams().add(videoStream);
-                        break;
-                    }
-                    case AUDIO: {
-                        AudioStream audioStream = new AudioStream();
-                        populateStreamInfo(audioStream, fFmpegStream);
-                        audioStream.setChannelLayout(fFmpegStream.channel_layout);
-                        audioStream.setLanguage(detectLanguage(audioStream));
-                        audioStream.setSampleRate(fFmpegStream.sample_rate);
-                        log.info("Parsed audio stream: {}", audioStream);
-                        mediaInfo.getAudioStreams().add(audioStream);
-                        break;
-                    }
-                    case SUBTITLE: {
-                        SubtitleStream subtitleStream = new SubtitleStream();
-                        populateStreamInfo(subtitleStream, fFmpegStream);
-                        subtitleStream.setLanguage(detectLanguage(subtitleStream));
-                        log.info("Parsed subtitle stream: {}", subtitleStream);
-                        mediaInfo.getSubtitleStreams().add(subtitleStream);
-                        break;
-                    }
-                }
-            }
-        }
-
-        log.info("Parsed media info: {}", mediaInfo);
-        return mediaInfo;
-    }
-
-    private static void populateStreamInfo(org.tsd.rest.v1.tsdtv.stream.Stream tsdtvStream,
-                                           FFmpegStream fFmpegStream) {
-        tsdtvStream.setIndex(fFmpegStream.index);
-        tsdtvStream.setCodecName(fFmpegStream.codec_name);
-        if (fFmpegStream.tags != null) {
-            tsdtvStream.setTags(new HashMap<>(fFmpegStream.tags));
-        }
-    }
-
-    private static String detectLanguage(org.tsd.rest.v1.tsdtv.stream.Stream tsdtvStream) {
-        return tsdtvStream.getTags().entrySet().stream()
-                .filter(entry -> StringUtils.equalsIgnoreCase(entry.getKey(), LANGUAGE_TAG))
-                .map(Map.Entry::getValue)
-                .findAny().orElse(null);
-    }
-
-    private static List<File> listFilesAlphabetically(File directory) {
+    private List<File> listFilesAlphabetically(File directory) {
         if (!directory.isDirectory()) {
             throw new IllegalArgumentException(directory.getAbsolutePath()+" is not a directory");
         }
@@ -224,6 +150,7 @@ public class AgentInventory {
             return new LinkedList<>();
         }
         return Arrays.stream(files)
+                .filter(file -> !invalidFiles.contains(file))
                 .sorted(Comparator.comparing(file -> file.getName().toLowerCase()))
                 .collect(Collectors.toList());
     }

@@ -7,24 +7,24 @@
     "scheduledItems": [
       {
         "series": "Outlaw_Star",
-        "commercialBreakMinutes": 2
+        "commercialBreakMinutes": 3
       },
       {
         "series": "Yu_Yu_Hakusho",
-        "commercialBreakMinutes": 2
+        "commercialBreakMinutes": 3
       },
       {
         "series": "Gundam_Wing",
-        "commercialBreakMinutes": 2
+        "commercialBreakMinutes": 3
       },
       {
         "series": "One_Punch_Man",
-        "commercialBreakMinutes": 2
+        "commercialBreakMinutes": 3
       },
       {
         "series": "Ghost_in_the_Shell",
         "season": "2nd_GIG",
-        "commercialBreakMinutes": 2
+        "commercialBreakMinutes": 3
       }
     ]
     }

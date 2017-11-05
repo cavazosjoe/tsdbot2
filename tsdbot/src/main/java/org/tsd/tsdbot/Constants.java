@@ -17,10 +17,13 @@ public class Constants {
         public static final String OWNER = "owner";
         public static final String BITLY_USER = "bitlyUser";
         public static final String BITLY_API_KEY = "bitlyApiKey";
+
         public static final String S3_FILENAMES_BUCKET = "filenamesBucket";
         public static final String S3_RANDOM_FILENAMES_BUCKET = "randomFilenamesBucket";
         public static final String S3_TSDTV_BUCKET = "tsdtvBucket";
         public static final String S3_TSDTV_IMAGES_BUCKET = "tsdtvImagesBucket";
+        public static final String S3_TSDTV_COMMERCIALS_BUCKET = "tsdtvCommercialsBucket";
+
         public static final String MASHAPE_API_KEY = "mashapeApiKey";
         public static final String GOOGLE_GIS_CX = "gisCx";
         public static final String GOOGLE_API_KEY = "googleApiKey";

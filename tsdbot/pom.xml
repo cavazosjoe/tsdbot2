@@ -144,6 +144,12 @@
       <version>${quartzVersion}</version>
     </dependency>
 
+    <dependency>
+      <groupId>uk.co.caprica</groupId>
+      <artifactId>vlcj-info</artifactId>
+      <version>1.0.0</version>
+    </dependency>
+
   </dependencies>
 
   <build>

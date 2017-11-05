@@ -9,14 +9,28 @@ public class QueuedItem {
     private QueuedItemType type;
     private long startTime;
     private long endTime;
-    private Integer effectiveEpisodeNumber;
 
-    public Integer getEffectiveEpisodeNumber() {
-        return effectiveEpisodeNumber;
+    private EpisodicInfo episodicInfo;
+
+    public QueuedItem() {
     }
 
-    public void setEffectiveEpisodeNumber(Integer effectiveEpisodeNumber) {
-        this.effectiveEpisodeNumber = effectiveEpisodeNumber;
+    public QueuedItem(Media media) {
+        this(media, null);
+    }
+
+    public QueuedItem(Media media, EpisodicInfo episodicInfo) {
+        this.media = media;
+        this.type = QueuedItemType.fromClass(media.getClass());
+        this.episodicInfo = episodicInfo;
+    }
+
+    public EpisodicInfo getEpisodicInfo() {
+        return episodicInfo;
+    }
+
+    public void setEpisodicInfo(EpisodicInfo episodicInfo) {
+        this.episodicInfo = episodicInfo;
     }
 
     public QueuedItemType getType() {
@@ -62,7 +76,7 @@ public class QueuedItem {
                 .append("type", type)
                 .append("startTime", startTime)
                 .append("endTime", endTime)
-                .append("effectiveEpisodeNumber", effectiveEpisodeNumber)
+                .append("episodicInfo", episodicInfo)
                 .toString();
     }
 }

@@ -7,12 +7,11 @@ import com.google.inject.Injector;
 import com.google.inject.name.Names;
 import io.dropwizard.Application;
 import io.dropwizard.setup.Environment;
-import net.bramp.ffmpeg.FFmpeg;
-import net.bramp.ffmpeg.FFprobe;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tsd.app.TSDTVModule;
 import org.tsd.client.TSDBotClient;
 
 import java.io.File;
@@ -57,9 +56,7 @@ public class TSDTVAgentApplication extends Application<TSDTVAgentConfiguration> 
                     throw new RuntimeException("Invalid TSDBot URL: " + tsdtvAgentConfiguration.getTsdbotUrl(), e);
                 }
 
-                bind(String.class)
-                        .annotatedWith(Names.named("tsdtvUrl"))
-                        .toInstance(tsdtvAgentConfiguration.getTsdtvUrl());
+                install(new TSDTVModule(tsdtvAgentConfiguration.getTsdtv()));
 
                 bind(String.class)
                         .annotatedWith(Names.named("password"))
@@ -76,24 +73,6 @@ public class TSDTVAgentApplication extends Application<TSDTVAgentConfiguration> 
                             .toInstance(inventoryDirectory);
                 } catch (Exception e) {
                     throw new RuntimeException("Failed to initialize TSDTV inventory", e);
-                }
-
-                FFprobe ffProbe;
-                try {
-                    ffProbe = new FFprobe(tsdtvAgentConfiguration.getFfprobe());
-                    bind(FFprobe.class)
-                            .toInstance(ffProbe);
-                } catch (Exception e) {
-                    throw new RuntimeException("Failed to initialize FFprobe: " + tsdtvAgentConfiguration.getFfprobe(), e);
-                }
-
-                FFmpeg ffMpeg;
-                try {
-                    ffMpeg = new FFmpeg(tsdtvAgentConfiguration.getFfmpeg());
-                    bind(FFmpeg.class)
-                            .toInstance(ffMpeg);
-                } catch (Exception e) {
-                    throw new RuntimeException("Failed to initialize FFmpeg: " + tsdtvAgentConfiguration.getFfmpeg(), e);
                 }
 
                 bind(ExecutorService.class)

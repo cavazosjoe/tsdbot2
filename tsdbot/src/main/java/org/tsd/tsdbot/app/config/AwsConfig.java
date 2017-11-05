@@ -30,6 +30,18 @@ public class AwsConfig {
     @NotNull
     private String tsdtvQueueImagesBucket;
 
+    @NotEmpty
+    @NotNull
+    private String tsdtvCommercialsBucket;
+
+    public String getTsdtvCommercialsBucket() {
+        return tsdtvCommercialsBucket;
+    }
+
+    public void setTsdtvCommercialsBucket(String tsdtvCommercialsBucket) {
+        this.tsdtvCommercialsBucket = tsdtvCommercialsBucket;
+    }
+
     public String getTsdtvBucket() {
         return tsdtvBucket;
     }

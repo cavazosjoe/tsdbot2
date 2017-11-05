@@ -3,6 +3,7 @@ package org.tsd.tsdbot.app.config;
 import io.dropwizard.Configuration;
 import io.dropwizard.db.DataSourceFactory;
 import org.hibernate.validator.constraints.NotEmpty;
+import org.tsd.app.config.TSDTVConfig;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;

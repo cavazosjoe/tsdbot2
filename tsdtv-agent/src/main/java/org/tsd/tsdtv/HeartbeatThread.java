@@ -44,7 +44,7 @@ public class HeartbeatThread implements Runnable {
 
     public void run() {
         while (!shutdown) {
-            log.info("Building heartbeat...");
+            log.debug("Building heartbeat...");
 
             if (shouldRefreshInventory()) {
                 inventory = agentInventory.compileInventory();

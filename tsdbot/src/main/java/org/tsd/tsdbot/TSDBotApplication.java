@@ -1,11 +1,5 @@
 package org.tsd.tsdbot;
 
-import com.amazonaws.auth.AWSCredentialsProvider;
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.regions.Regions;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3Client;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -28,10 +22,12 @@ import org.apache.http.impl.client.HttpClients;
 import org.hibernate.SessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tsd.app.TSDTVModule;
 import org.tsd.tsdbot.app.BotUrl;
 import org.tsd.tsdbot.app.DiscordServer;
 import org.tsd.tsdbot.app.Stage;
 import org.tsd.tsdbot.app.config.TSDBotConfiguration;
+import org.tsd.tsdbot.app.module.S3Module;
 import org.tsd.tsdbot.async.ChannelThreadFactory;
 import org.tsd.tsdbot.discord.DiscordChannel;
 import org.tsd.tsdbot.discord.DiscordUser;
@@ -118,9 +114,7 @@ public class TSDBotApplication extends Application<TSDBotConfiguration> {
                         .annotatedWith(Names.named(Constants.Annotations.GOOGLE_API_KEY))
                         .toInstance(configuration.getGoogle().getApiKey());
 
-                bind(String.class)
-                        .annotatedWith(Names.named(Constants.Annotations.TSDTV_STREAM_URL))
-                        .toInstance(configuration.getTsdtv().getStreamUrl());
+                install(new TSDTVModule(configuration.getTsdtv()));
 
                 try {
                     URL botUrl = new URL(configuration.getBotUrl());
@@ -178,33 +172,7 @@ public class TSDBotApplication extends Application<TSDBotConfiguration> {
                 bind(ExecutorService.class)
                         .toInstance(executorService);
 
-                AWSCredentialsProvider credentialsProvider = new AWSStaticCredentialsProvider(
-                        new BasicAWSCredentials(
-                                configuration.getAws().getAccessKey(),
-                                configuration.getAws().getSecretKey()));
-
-                AmazonS3 s3Client = AmazonS3Client.builder()
-                        .withCredentials(credentialsProvider)
-                        .withRegion(Regions.DEFAULT_REGION)
-                        .build();
-                bind(AmazonS3.class)
-                        .toInstance(s3Client);
-
-                bind(String.class)
-                        .annotatedWith(Names.named(Constants.Annotations.S3_FILENAMES_BUCKET))
-                        .toInstance(configuration.getAws().getFilenamesBucket());
-
-                bind(String.class)
-                        .annotatedWith(Names.named(Constants.Annotations.S3_RANDOM_FILENAMES_BUCKET))
-                        .toInstance(configuration.getAws().getRandomFilenamesBucket());
-
-                bind(String.class)
-                        .annotatedWith(Names.named(Constants.Annotations.S3_TSDTV_BUCKET))
-                        .toInstance(configuration.getAws().getTsdtvBucket());
-
-                bind(String.class)
-                        .annotatedWith(Names.named(Constants.Annotations.S3_TSDTV_IMAGES_BUCKET))
-                        .toInstance(configuration.getAws().getTsdtvQueueImagesBucket());
+                install(new S3Module(configuration));
 
                 bind(FilenameLibrary.class)
                         .to(S3FilenameLibrary.class);

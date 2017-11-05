@@ -1,5 +1,6 @@
 package org.tsd.rest.v1.tsdtv.queue;
 
+import org.tsd.rest.v1.tsdtv.Commercial;
 import org.tsd.rest.v1.tsdtv.Episode;
 import org.tsd.rest.v1.tsdtv.Media;
 import org.tsd.rest.v1.tsdtv.Movie;
@@ -8,9 +9,9 @@ import java.util.Arrays;
 import java.util.Optional;
 
 public enum QueuedItemType {
-    episode (Episode.class),
-    movie   (Movie.class);
-//    commercial (Commercial.class);
+    episode     (Episode.class),
+    movie       (Movie.class),
+    commercial  (Commercial.class);
 
     private final Class<? extends Media> clazz;
 

@@ -19,5 +19,9 @@
       <source>prod.yml</source>
       <outputDirectory>/</outputDirectory>
     </file>
+    <file>
+      <source>.ebextensions/ffmpeg.config</source>
+      <outputDirectory>/.ebextensions/</outputDirectory>
+    </file>
   </files>
 </assembly>

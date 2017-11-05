@@ -1,9 +1,12 @@
 package org.tsd.tsdtv;
 
+import net.bramp.ffmpeg.job.FFmpegJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tsd.client.TSDBotClient;
+import org.tsd.rest.v1.tsdtv.Media;
 import org.tsd.rest.v1.tsdtv.job.*;
+import org.tsd.util.RetryUtil;
 
 import javax.inject.Inject;
 import java.time.Instant;
@@ -17,14 +20,20 @@ public class JobPollingThread implements Runnable {
 
     private final TSDBotClient tsdBotClient;
     private final TSDTVPlayer player;
+    private final AgentInventory agentInventory;
+    private final TSDBotClient client;
 
     private boolean shutdown = false;
 
     @Inject
     public JobPollingThread(TSDBotClient tsdBotClient,
-                            TSDTVPlayer player) {
+                            TSDTVPlayer player,
+                            AgentInventory agentInventory,
+                            TSDBotClient client) {
         this.tsdBotClient = tsdBotClient;
         this.player = player;
+        this.agentInventory = agentInventory;
+        this.client = client;
     }
 
     @Override
@@ -57,7 +66,17 @@ public class JobPollingThread implements Runnable {
             TSDTVPlayJobResult result = new TSDTVPlayJobResult();
             result.setJobId(job.getId());
             try {
-                player.play(mediaId);
+                Media media = agentInventory.getFileByMediaId(mediaId);
+                if (media == null) {
+                    throw new Exception("Could not find media in inventory with id "+mediaId);
+                }
+                log.info("Found media: {}", media);
+                player.play(media, state -> {
+                    boolean error = !FFmpegJob.State.FINISHED.equals(state);
+                    RetryUtil.executeWithRetry(5,
+                            TimeUnit.SECONDS.toMillis(1),
+                            () -> client.sendMediaStoppedNotification(mediaId, error));
+                });
                 result.setSuccess(true);
                 result.setTimeStarted(Instant.now().toEpochMilli());
             } catch (Exception e) {

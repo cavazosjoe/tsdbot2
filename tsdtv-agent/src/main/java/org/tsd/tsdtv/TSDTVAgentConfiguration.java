@@ -2,7 +2,9 @@ package org.tsd.tsdtv;
 
 import io.dropwizard.Configuration;
 import org.hibernate.validator.constraints.NotEmpty;
+import org.tsd.app.config.TSDTVConfig;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
 public class TSDTVAgentConfiguration extends Configuration {
@@ -17,23 +19,15 @@ public class TSDTVAgentConfiguration extends Configuration {
 
     @NotNull
     @NotEmpty
-    private String tsdtvUrl;
-
-    @NotNull
-    @NotEmpty
     private String inventoryPath;
 
     @NotNull
     @NotEmpty
-    private String ffmpeg;
-
-    @NotNull
-    @NotEmpty
-    private String ffprobe;
-
-    @NotNull
-    @NotEmpty
     private String password;
+
+    @NotNull
+    @Valid
+    private TSDTVConfig tsdtv;
 
     public String getPassword() {
         return password;
@@ -41,14 +35,6 @@ public class TSDTVAgentConfiguration extends Configuration {
 
     public void setPassword(String password) {
         this.password = password;
-    }
-
-    public String getTsdtvUrl() {
-        return tsdtvUrl;
-    }
-
-    public void setTsdtvUrl(String tsdtvUrl) {
-        this.tsdtvUrl = tsdtvUrl;
     }
 
     public String getTsdbotUrl() {
@@ -67,27 +53,19 @@ public class TSDTVAgentConfiguration extends Configuration {
         this.inventoryPath = inventoryPath;
     }
 
-    public String getFfmpeg() {
-        return ffmpeg;
-    }
-
-    public void setFfmpeg(String ffmpeg) {
-        this.ffmpeg = ffmpeg;
-    }
-
-    public String getFfprobe() {
-        return ffprobe;
-    }
-
-    public void setFfprobe(String ffprobe) {
-        this.ffprobe = ffprobe;
-    }
-
     public String getAgentId() {
         return agentId;
     }
 
     public void setAgentId(String agentId) {
         this.agentId = agentId;
+    }
+
+    public TSDTVConfig getTsdtv() {
+        return tsdtv;
+    }
+
+    public void setTsdtv(TSDTVConfig tsdtv) {
+        this.tsdtv = tsdtv;
     }
 }

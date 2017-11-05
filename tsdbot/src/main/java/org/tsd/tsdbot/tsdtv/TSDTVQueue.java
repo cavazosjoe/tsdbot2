@@ -2,19 +2,17 @@ package org.tsd.tsdbot.tsdtv;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import net.bramp.ffmpeg.job.FFmpegJob;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tsd.rest.v1.tsdtv.Episode;
-import org.tsd.rest.v1.tsdtv.Media;
-import org.tsd.rest.v1.tsdtv.Season;
-import org.tsd.rest.v1.tsdtv.Series;
+import org.tsd.rest.v1.tsdtv.*;
 import org.tsd.rest.v1.tsdtv.job.TSDTVPlayJob;
 import org.tsd.rest.v1.tsdtv.job.TSDTVPlayJobResult;
 import org.tsd.rest.v1.tsdtv.job.TSDTVStopJob;
+import org.tsd.rest.v1.tsdtv.queue.EpisodicInfo;
 import org.tsd.rest.v1.tsdtv.queue.QueuedItem;
-import org.tsd.rest.v1.tsdtv.queue.QueuedItemType;
 import org.tsd.rest.v1.tsdtv.schedule.ScheduledBlock;
 import org.tsd.rest.v1.tsdtv.schedule.ScheduledItem;
 import org.tsd.tsdbot.Constants;
@@ -24,6 +22,7 @@ import org.tsd.tsdbot.tsdtv.library.AgentMedia;
 import org.tsd.tsdbot.tsdtv.library.TSDTVLibrary;
 import org.tsd.tsdbot.tsdtv.library.TSDTVListing;
 import org.tsd.tsdbot.util.TSDTVUtils;
+import org.tsd.tsdtv.TSDTVPlayer;
 
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -40,15 +39,18 @@ public class TSDTVQueue {
     private final TSDTVLibrary library;
     private final JobQueue jobQueue;
     private final TSDTVEpisodicItemDao episodicItemDao;
+    private final TSDTVPlayer player;
 
     @Inject
     public TSDTVQueue(ExecutorService executorService,
                       TSDTVLibrary library,
                       TSDTVEpisodicItemDao episodicItemDao,
-                      JobQueue jobQueue) {
+                      JobQueue jobQueue,
+                      TSDTVPlayer player) {
         this.library = library;
         this.jobQueue = jobQueue;
         this.episodicItemDao = episodicItemDao;
+        this.player = player;
         executorService.submit(new QueueManagerThread());
     }
 
@@ -64,32 +66,24 @@ public class TSDTVQueue {
         return result;
     }
 
-    public synchronized boolean add(String agentId, int mediaId) throws TSDTVException {
-        return add(agentId, mediaId, null);
-    }
-
-    private synchronized boolean add(String agentId, int mediaId, Integer episodeNumber) throws TSDTVException {
+    private synchronized boolean add(String agentId, int mediaId) throws TSDTVException {
         log.info("Adding media to queue, agentId={}, mediaId={}", agentId, mediaId);
         Media media = library.findMediaById(agentId, mediaId);
         log.info("Found media: {}", media);
+        return add(new QueuedItem(media));
+    }
 
+    private synchronized boolean add(QueuedItem addingItem) throws TSDTVException {
         if (nowPlaying == null && CollectionUtils.isEmpty(queue)) {
             // play immediately
-            nowPlaying(media);
+            nowPlaying(addingItem);
             return true;
         } else {
             // try to enqueue
-            if ( (nowPlaying != null && Objects.equals(media, nowPlaying.getMedia())) ||
-                    doesQueueContainMedia(media) ) {
+            if ( (nowPlaying != null && Objects.equals(addingItem.getMedia(), nowPlaying.getMedia())) ||
+                    doesQueueContainMedia(addingItem.getMedia()) ) {
                 log.error("Duplicate media: nowPlaying={}, queue={}", nowPlaying, queue);
-                throw new DuplicateMediaQueuedException(agentId, mediaId);
-            }
-
-            QueuedItem addingItem = new QueuedItem();
-            addingItem.setMedia(media);
-            addingItem.setType(QueuedItemType.fromClass(media.getClass()));
-            if (episodeNumber != null) {
-                addingItem.setEffectiveEpisodeNumber(episodeNumber);
+                throw new DuplicateMediaQueuedException(addingItem.getMedia().getAgentId(), addingItem.getMedia().getId());
             }
 
             if (CollectionUtils.isNotEmpty(queue)) {
@@ -109,6 +103,9 @@ public class TSDTVQueue {
         return queue.stream().map(QueuedItem::getMedia).anyMatch(m -> m.equals(media));
     }
 
+    /*
+    Tell the agent to stop playing
+     */
     public synchronized void stopNowPlaying() {
         if (nowPlaying != null) {
             log.info("Stopping nowPlaying: {}", nowPlaying);
@@ -122,6 +119,12 @@ public class TSDTVQueue {
         }
     }
 
+    /*
+    The agent is telling us that the media it was playing has stopped because:
+    a. the agent was asked to stop via stopNowPlaying()
+    b. the stream stopped normally
+    c. the stream stopped in error
+     */
     public synchronized void reportStopped(int mediaId) {
         log.info("Handling stopped notification, mediaId={}, nowPlaying={}", mediaId, nowPlaying);
         if (nowPlaying != null && nowPlaying.getMedia().getId() == mediaId) {
@@ -129,39 +132,77 @@ public class TSDTVQueue {
         }
     }
 
-    private void nowPlaying(Media media) throws TSDTVException {
-        log.info("Setting nowPlaying: {}", media);
-        TSDTVPlayJob playJob = new TSDTVPlayJob();
-        playJob.setMediaId(media.getId());
-        try {
-            TSDTVPlayJobResult result
-                    = jobQueue.submitJob(media.getAgentId(), playJob, TimeUnit.SECONDS.toMillis(20));
+    private void nowPlaying(QueuedItem queuedItem) throws TSDTVException {
+        log.info("Setting nowPlaying: {}", queuedItem);
 
-            if (!result.isSuccess()) {
-                throw new TSDTVException("Error playing media");
+        switch (queuedItem.getType()) {
+            case commercial: {
+                Commercial commercial = (Commercial) queuedItem.getMedia();
+                try {
+                    log.info("Playing commercial: {}", commercial);
+                    player.play(queuedItem.getMedia(), (state) -> {
+                        if (state.equals(FFmpegJob.State.FINISHED)) {
+                            log.info("Commercial stream ended normally");
+                        } else {
+                            log.error("Commercial stream ended in error: {}", state);
+                        }
+                    });
+                } catch (Exception e) {
+                    log.error("Error playing commercial: " + queuedItem.getMedia(), e);
+                } finally {
+                    commercial.getFile().delete();
+                    log.info("Deleted commercial file: {}", commercial.getFile());
+                }
+                break;
             }
 
-            long startedTimeUTC = result.getTimeStarted();
+            case movie:
+            case episode: {
+                Media media = queuedItem.getMedia();
+                log.info("Playing media: {}", media);
 
-            QueuedItem queuedItem = new QueuedItem();
-            queuedItem.setMedia(media);
-            queuedItem.setType(QueuedItemType.fromClass(media.getClass()));
-            queuedItem.setStartTime(startedTimeUTC);
-            queuedItem.updateEndTime();
-            log.info("Set nowPlaying start/end times, {} -> {}", queuedItem.getStartTime(), queuedItem.getEndTime());
-            this.nowPlaying = queuedItem;
+                // job request to send to agent
+                TSDTVPlayJob playJob = new TSDTVPlayJob();
+                playJob.setMediaId(media.getId());
+                try {
+                    log.info("Sending play request to agent: {}", media.getAgentId());
+                    TSDTVPlayJobResult result
+                            = jobQueue.submitJob(media.getAgentId(), playJob, TimeUnit.SECONDS.toMillis(20));
 
-            long lastItemEndTime = queuedItem.getEndTime();
-            for (QueuedItem inQueue : queue) {
-                inQueue.setStartTime(lastItemEndTime + Constants.TSDTV.SCHEDULING_FUDGE_FACTOR_MILLIS);
-                inQueue.updateEndTime();
-                log.info("Set queued media start/end times, mediaId={}, {} -> {}",
-                        inQueue.getMedia().getId(), queuedItem.getStartTime(), queuedItem.getEndTime());
-                lastItemEndTime = inQueue.getEndTime();
+                    if (!result.isSuccess()) {
+                        throw new TSDTVException("Error playing media");
+                    }
+
+                    long startedTimeUTC = result.getTimeStarted();
+                    queuedItem.setStartTime(startedTimeUTC);
+                    queuedItem.updateEndTime();
+                    log.info("Set nowPlaying start/end times, {} -> {}", queuedItem.getStartTime(), queuedItem.getEndTime());
+                    this.nowPlaying = queuedItem;
+
+                    long lastItemEndTime = queuedItem.getEndTime();
+                    for (QueuedItem inQueue : queue) {
+                        inQueue.setStartTime(lastItemEndTime + Constants.TSDTV.SCHEDULING_FUDGE_FACTOR_MILLIS);
+                        inQueue.updateEndTime();
+                        log.info("Set queued media start/end times, mediaId={}, {} -> {}",
+                                inQueue.getMedia().getId(), queuedItem.getStartTime(), queuedItem.getEndTime());
+                        lastItemEndTime = inQueue.getEndTime();
+                    }
+
+                    // update episode info if available
+                    if (queuedItem.getEpisodicInfo() != null) {
+                        EpisodicInfo episodicInfo = queuedItem.getEpisodicInfo();
+                        log.info("Detected scheduled episode with episodic info: {}", episodicInfo);
+                        episodicItemDao.setCurrentEpisode(
+                                episodicInfo.getEpisodicSeriesName(),
+                                episodicInfo.getEpisodicSeasonName(),
+                                episodicInfo.getEffectiveEpisodeNumber()+1);
+                    }
+
+                } catch (JobTimeoutException e) {
+                    log.error("Timed out waiting for response to play job");
+                }
+                break;
             }
-
-        } catch (JobTimeoutException e) {
-            log.error("Timed out waiting for response to play job");
         }
     }
 
@@ -171,7 +212,7 @@ public class TSDTVQueue {
         stopNowPlaying();
 
         TSDTVListing listing = library.getListings();
-        List<Episode> toPlay = new LinkedList<>();
+        List<QueuedItem> toPlay = new LinkedList<>();
 
         // Used to keep track of episode numbers, since blocks can contain duplicate series/seasons
         Map<ScheduledItem, Integer> episodeNumberMap = new HashMap<>();
@@ -198,10 +239,17 @@ public class TSDTVQueue {
                     } else {
                         Episode episodeToPlay = findEpisodeToPlay(scheduledItem,
                                 episodeNumberMap, series.getName(), season.getName(), season.getEpisodes());
-                        toPlay.add(episodeToPlay);
+                        EpisodicInfo episodicInfo = new EpisodicInfo();
+                        episodicInfo.setEpisodicSeriesName(series.getName());
+                        episodicInfo.setEpisodicSeasonName(season.getName());
+                        episodicInfo.setEffectiveEpisodeNumber(episodeToPlay.getEpisodeNumber());
+                        toPlay.add(new QueuedItem(episodeToPlay, episodicInfo));
                     }
                 } else {
                     // this scheduled item only specifies a series
+                    Episode episodeToPlay = null;
+                    EpisodicInfo episodicInfo = null;
+
                     if (CollectionUtils.isNotEmpty(series.getSeasons())) {
                         // this series has seasons -- bundle up all episodes, use their index as episode number
                         List<Episode> effectiveEpisodes = TSDTVUtils.getEffectiveEpisodes(series);
@@ -210,7 +258,6 @@ public class TSDTVQueue {
                         int currentEpisode = getEffectiveCurrentEpisodeNumber(scheduledItem,
                                 episodeNumberMap, series.getName(), null);
 
-                        Episode episodeToPlay;
                         if (currentEpisode > maxEpisodeNumber) {
                             log.info("currentEpisode {} is larger than maxEpisode {}, using first...",
                                     currentEpisode, maxEpisodeNumber);
@@ -220,28 +267,41 @@ public class TSDTVQueue {
                             episodeToPlay = effectiveEpisodes.get(currentEpisode-1);
                         }
 
-                        toPlay.add(episodeToPlay);
-                        log.info("Added episode to queue: {}", episodeToPlay);
+                        episodicInfo = new EpisodicInfo();
+                        episodicInfo.setEpisodicSeriesName(series.getName());
+                        episodicInfo.setEffectiveEpisodeNumber(currentEpisode);
                         episodeNumberMap.put(scheduledItem, currentEpisode+1);
                     } else {
                         // this series has no seasons -- use episode number from media
-                        Episode episodeToPlay = findEpisodeToPlay(scheduledItem,
+                        episodeToPlay = findEpisodeToPlay(scheduledItem,
                                 episodeNumberMap, series.getName(), null, series.getEpisodes());
-                        toPlay.add(episodeToPlay);
+                        episodicInfo = new EpisodicInfo();
+                        episodicInfo.setEpisodicSeriesName(series.getName());
+                        episodicInfo.setEffectiveEpisodeNumber(episodeToPlay.getEpisodeNumber());
                     }
+
+                    QueuedItem queuedItem = new QueuedItem(episodeToPlay, episodicInfo);
+                    log.info("Adding episode: {}", queuedItem);
+                    toPlay.add(queuedItem);
+                }
+            }
+
+            if (scheduledItem.getCommercialBreakMinutes() > 0) {
+                double secondsRemaining = scheduledItem.getCommercialBreakMinutes()*60;
+                while (secondsRemaining > 0) {
+                    Commercial commercial = library.getCommercial();
+                    toPlay.add(new QueuedItem(commercial));
+                    secondsRemaining -= commercial.getMediaInfo().getDurationSeconds();
                 }
             }
         }
 
-        for (Episode episode : toPlay) {
-            int effectiveEpisodeNumber = episode.getOverriddenEpisodeNumber() != null ?
-                    episode.getOverriddenEpisodeNumber() : episode.getEpisodeNumber();
+        for (QueuedItem queuedItem : toPlay) {
             try {
-                log.info("Adding episode to queue, series={}, season={}, effectiveEpisodeNumber = {}",
-                        episode.getSeriesName(), episode.getSeasonName(), effectiveEpisodeNumber);
-                add(episode.getAgentId(), episode.getId(), effectiveEpisodeNumber);
+                log.info("Adding scheduled item to queue: {}", queuedItem);
+                add(queuedItem);
             } catch (Exception e) {
-                log.error("Error adding episode to queue: {}", episode);
+                log.error("Error adding scheduled item to queue: " + queuedItem, e);
             }
         }
     }
@@ -313,7 +373,7 @@ public class TSDTVQueue {
                         QueuedItem queuedItem = queue.remove(0);
                         log.info("Moving queued item to nowPlaying: {}", queuedItem.getMedia());
                         try {
-                            nowPlaying(queuedItem.getMedia());
+                            nowPlaying(queuedItem);
                         } catch (Exception e) {
                             log.error("Error playing media: " + queuedItem.getMedia(), e);
                         }

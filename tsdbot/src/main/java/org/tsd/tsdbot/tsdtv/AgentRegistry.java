@@ -11,10 +11,7 @@ import org.tsd.tsdbot.tsdtv.job.JobQueue;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -72,6 +69,17 @@ public class AgentRegistry {
 
     public Set<OnlineAgent> getOnlineAgents() {
         return new HashSet<>(onlineAgents.values());
+    }
+
+    public OnlineAgent getFastestAgent() {
+        if (onlineAgents.isEmpty()) {
+            return null;
+        }
+        List<OnlineAgent> ordered = onlineAgents.values()
+                .stream()
+                .sorted(Comparator.comparing(OnlineAgent::getBitrate))
+                .collect(Collectors.toList());
+        return ordered.get(0);
     }
 
     private void setAgentStatus(String agentId, AgentStatus status) {
