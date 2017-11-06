@@ -20,7 +20,7 @@ public class HeartbeatThread implements Runnable {
 
 
     private static final long PERIOD_SECONDS = 5;
-    private static final long INVENTORY_PERIOD_MINUTES = 5;
+    private static final long INVENTORY_PERIOD_MINUTES = 30;
 
     private final String agentId;
     private final NetworkMonitor networkMonitor;

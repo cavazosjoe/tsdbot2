@@ -39,7 +39,6 @@ public class TSDTVLibrary {
 
     private static final Logger log = LoggerFactory.getLogger(TSDTVLibrary.class);
 
-    private final ExecutorService executorService;
     private final AgentRegistry agentRegistry;
     private final String streamUrl;
     private final AmazonS3 s3Client;
@@ -63,7 +62,6 @@ public class TSDTVLibrary {
         this.agentRegistry = agentRegistry;
         this.streamUrl = streamUrl;
         this.s3Client = s3Client;
-        this.executorService = executorService;
         this.tsdtvCommercialsBucket = tsdtvCommercialsBucket;
         this.fFprobe = fFprobe;
 

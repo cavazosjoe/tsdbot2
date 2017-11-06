@@ -42,26 +42,45 @@ public class AgentInventory {
     public Inventory compileInventory() {
         Inventory inventory = new Inventory();
         filesById.clear();
+
+        List<File> seriesToEvaluate = new LinkedList<>();
+        List<File> moviesToEvaluate = new LinkedList<>();
+
         for (File file : listFilesAlphabetically(inventoryDirectory)) {
-            log.info("Evaluating file: {}", file);
             if (file.isDirectory()) {
-                try {
-                    Series series = compileSeries(file);
-                    inventory.getSeries().add(series);
-                } catch (Exception e) {
-                    log.error("Error building series from directory: "+file.getAbsolutePath(), e);
-                }
+                seriesToEvaluate.add(file);
             } else {
-                try {
-                    Movie movie = buildMovie(file);
-                    inventory.getMovies().add(movie);
-                    filesById.put(movie.getId(), movie);
-                } catch (Exception e) {
-                    log.error("Error building movie from file: "+file.getAbsolutePath(), e);
-                    invalidFiles.add(file);
-                }
+                moviesToEvaluate.add(file);
             }
         }
+
+        inventory.setSeries(
+                seriesToEvaluate
+                        .parallelStream()
+                        .map(file -> {
+                            try {
+                                return compileSeries(file);
+                            } catch (Exception e) {
+                                log.error("Error building series from directory: "+file.getAbsolutePath(), e);
+                                return null;
+                            }
+                        })
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toList()));
+
+        inventory.setMovies(
+                moviesToEvaluate
+                        .parallelStream()
+                        .map(file -> {
+                            try {
+                                return buildMovie(file);
+                            } catch (Exception e) {
+                                log.error("Error building movie from file: "+file.getAbsolutePath(), e);
+                                return null;
+                            }
+                        })
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toList()));
 
         log.info("Built TSDTV inventory: {}", inventory);
         log.info("Files by ID: {}", filesById);

@@ -48,7 +48,9 @@ public class TSDBotClient {
         URIBuilder uriBuilder = new URIBuilder(tsdbotUrl.toURI())
                 .setPath("/tsdtv/agent/"+heartbeat.getAgentId());
         HttpPut put = new HttpPut(uriBuilder.build());
-        put.setEntity(new StringEntity(objectMapper.writeValueAsString(heartbeat)));
+        String entity = objectMapper.writeValueAsString(heartbeat);
+        log.info("Agent inventory size: {} KB", entity.getBytes().length/1024);
+        put.setEntity(new StringEntity(entity));
         put.setHeader("Content-Type", MediaType.APPLICATION_JSON);
         try (CloseableHttpResponse response = getResponseWithRedundancy(httpClient, put)) {
             if (response.getStatusLine().getStatusCode()/100 != 2) {
