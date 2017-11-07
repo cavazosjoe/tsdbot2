@@ -1,0 +1,30 @@
+agentId: "schooly-hq-agent"
+tsdbotUrl: "http://tsdbot.teamschoolyd.net/tsdtv"
+inventoryPath: "/tsdtv"
+password: "Grace&Glory"
+
+logging:
+  level: INFO
+  appenders:
+      - type: file
+        currentLogFilename: log/tsdbot.log
+        archive: true
+        archivedLogFilenamePattern: log/tsdbot-%d.log
+        archivedFileCount: 5
+        timeZone: UTC
+  loggers:
+    net.bramp: WARN
+    org.tsd.tsdtv.JobPollingThread: DEBUG
+
+tsdtv:
+  streamUrl: "rtmp://tsdtv.teamschoolyd.net/tsdtvApp/tsdtv"
+  ffmpegExec: "/home/joe/bin/ffmpeg"
+  ffprobeExec: "/home/joe/bin/ffprobe"
+
+server:
+  applicationConnectors:
+  - type: http
+    port: 9000
+  adminConnectors:
+  - type: http
+    port: 9001

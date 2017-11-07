@@ -159,12 +159,12 @@
                     // Seasons for series
                     $.each(seriesItem.media.seasons, function(j, seasonItem) {
                         htmlString +=
-                                    '<div id="season'+j+'-header" class="panel-heading" role="tab">' +
+                                    '<div id="series'+i+'season'+j+'-header" class="panel-heading" role="tab">' +
                             '           <h4 class="panel-title">' +
-                            '               <a class="collapsed" data-toggle="collapse" data-parent="#show'+i+'-content" href="#season'+j+'-content" aria-expanded="true" aria-controls="season'+j+'-content">'+seasonItem.name+'</a>' +
+                            '               <a class="collapsed" data-toggle="collapse" data-parent="#show'+i+'-content" href="#series'+i+'season'+j+'-content" aria-expanded="true" aria-controls="series'+i+'season'+j+'-content">'+seasonItem.name+'</a>' +
                             '           </h4>' +
                             '        </div>' +
-                            '       <div id="season'+j+'-content" class="panel-collapse collapse" role="tabpanel" aria-labelledby="season'+j+'-header">' +
+                            '       <div id="series'+i+'season'+j+'-content" class="panel-collapse collapse" role="tabpanel" aria-labelledby="series'+i+'season'+j+'-header">' +
                             '           <div class="panel-body">' +
                             '               <ul class="list-group">';
 

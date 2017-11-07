@@ -1,9 +1,11 @@
 package org.tsd.client;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.*;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
@@ -16,6 +18,7 @@ import org.tsd.rest.v1.tsdtv.job.JobResult;
 
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.net.URI;
 import java.net.URL;
 import java.util.concurrent.TimeUnit;
 
@@ -42,15 +45,19 @@ public class TSDBotClient {
         this.agentId = agentId;
         this.password = password;
         this.objectMapper = objectMapper;
+        log.info("Initialized TSDBotClient with URL {}", tsdbotUrl);
     }
 
     public HeartbeatResponse sendTsdtvAgentHeartbeat(Heartbeat heartbeat) throws Exception {
         URIBuilder uriBuilder = new URIBuilder(tsdbotUrl.toURI())
                 .setPath("/tsdtv/agent/"+heartbeat.getAgentId());
-        HttpPut put = new HttpPut(uriBuilder.build());
+        URI uri = uriBuilder.build();
+        log.info("Sending TSDTV agent heartbeat, URI={}", uri);
+
+        HttpPut put = new HttpPut(uri);
         String entity = objectMapper.writeValueAsString(heartbeat);
-        log.info("Agent inventory size: {} KB", entity.getBytes().length/1024);
-        put.setEntity(new StringEntity(entity));
+        log.info("Heartbeat size: {} KB", entity.getBytes().length/1024);
+        put.setEntity(new StringEntity(entity, ContentType.APPLICATION_JSON));
         put.setHeader("Content-Type", MediaType.APPLICATION_JSON);
         try (CloseableHttpResponse response = getResponseWithRedundancy(httpClient, put)) {
             if (response.getStatusLine().getStatusCode()/100 != 2) {
@@ -73,8 +80,12 @@ public class TSDBotClient {
         URIBuilder uriBuilder = new URIBuilder(tsdbotUrl.toURI())
                 .setPath("/tsdtv/stopped")
                 .addParameter("password", password);
-        HttpPost post = new HttpPost(uriBuilder.build());
-        post.setEntity(new StringEntity(objectMapper.writeValueAsString(notification)));
+        URI uri = uriBuilder.build();
+        log.info("Sending TSDTV agent stopped notification, URI={}, entity={}", uri, notification);
+
+        HttpPost post = new HttpPost(uri);
+        String entity = objectMapper.writeValueAsString(notification);
+        post.setEntity(new StringEntity(entity, ContentType.APPLICATION_JSON));
         post.setHeader("Content-Type", MediaType.APPLICATION_JSON);
         try (CloseableHttpResponse response = getResponseWithRedundancy(httpClient, post)) {
             if (response.getStatusLine().getStatusCode()/100 != 2) {
@@ -88,7 +99,10 @@ public class TSDBotClient {
     public Job pollForJob() throws Exception {
         URIBuilder uriBuilder = new URIBuilder(tsdbotUrl.toURI())
                 .setPath("/job/"+agentId);
-        HttpGet get = new HttpGet(uriBuilder.build());
+        URI uri = uriBuilder.build();
+        log.debug("Sending job poll request, URI={}", uri);
+
+        HttpGet get = new HttpGet(uri);
         try (CloseableHttpResponse response = getResponseWithRedundancy(httpClient, get)) {
             if (response.getStatusLine().getStatusCode()/100 != 2) {
                 String msg = String.format("HTTP error %d: %s",
@@ -109,8 +123,12 @@ public class TSDBotClient {
         try {
             URIBuilder uriBuilder = new URIBuilder(tsdbotUrl.toURI())
                     .setPath("/job/" + result.getJobId());
-            HttpPut put = new HttpPut(uriBuilder.build());
-            put.setEntity(new StringEntity(objectMapper.writeValueAsString(result)));
+            URI uri = uriBuilder.build();
+            log.debug("Sending job poll request, URI={}, result={}", uri, result);
+
+            HttpPut put = new HttpPut(uri);
+            String entity = objectMapper.writeValueAsString(result);
+            put.setEntity(new StringEntity(entity, ContentType.APPLICATION_JSON));
             put.setHeader("Content-Type", MediaType.APPLICATION_JSON);
             try (CloseableHttpResponse response = getResponseWithRedundancy(httpClient, put)) {
                 if (response.getStatusLine().getStatusCode() / 100 != 2) {
@@ -146,5 +164,14 @@ public class TSDBotClient {
         }
 
         throw error;
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("tsdbotUrl", tsdbotUrl)
+                .append("agentId", agentId)
+                .append("password", password)
+                .toString();
     }
 }

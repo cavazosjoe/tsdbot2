@@ -20,7 +20,11 @@
       <outputDirectory>/</outputDirectory>
     </file>
     <file>
-      <source>.ebextensions/ffmpeg.config</source>
+      <source>.ebextensions/01_ffmpeg.config</source>
+      <outputDirectory>/.ebextensions/</outputDirectory>
+    </file>
+    <file>
+      <source>.ebextensions/02_nginx.config</source>
       <outputDirectory>/.ebextensions/</outputDirectory>
     </file>
   </files>

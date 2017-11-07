@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Stream;
 
 public class TSDTVAgentApplication extends Application<TSDTVAgentConfiguration> {
 
@@ -42,6 +43,11 @@ public class TSDTVAgentApplication extends Application<TSDTVAgentConfiguration> 
             @Override
             protected void configure() {
 
+                bind(ExecutorService.class)
+                        .toInstance(executorService);
+                log.info("Bound executor service: {}", executorService);
+
+                log.info("Binding agentId: {}", tsdtvAgentConfiguration.getAgentId());
                 bind(String.class)
                         .annotatedWith(Names.named("agentId"))
                         .toInstance(tsdtvAgentConfiguration.getAgentId());
@@ -49,6 +55,7 @@ public class TSDTVAgentApplication extends Application<TSDTVAgentConfiguration> 
                 URL tsdbotUrl;
                 try {
                     tsdbotUrl = new URL(tsdtvAgentConfiguration.getTsdbotUrl());
+                    log.info("Binding tsdbotUrl: {}", tsdbotUrl);
                     bind(URL.class)
                             .annotatedWith(Names.named("tsdbotUrl"))
                             .toInstance(tsdbotUrl);
@@ -58,6 +65,7 @@ public class TSDTVAgentApplication extends Application<TSDTVAgentConfiguration> 
 
                 install(new TSDTVModule(tsdtvAgentConfiguration.getTsdtv()));
 
+                log.info("Binding password: {}", tsdtvAgentConfiguration.getPassword());
                 bind(String.class)
                         .annotatedWith(Names.named("password"))
                         .toInstance(tsdtvAgentConfiguration.getPassword());
@@ -65,6 +73,7 @@ public class TSDTVAgentApplication extends Application<TSDTVAgentConfiguration> 
                 File inventoryDirectory;
                 try {
                     inventoryDirectory = new File(tsdtvAgentConfiguration.getInventoryPath());
+                    log.info("Binding inventory directory: {}", inventoryDirectory);
                     if (!inventoryDirectory.exists()) {
                         throw new IOException("TSDTV inventory folder does not exist: " + tsdtvAgentConfiguration.getInventoryPath());
                     }
@@ -75,26 +84,23 @@ public class TSDTVAgentApplication extends Application<TSDTVAgentConfiguration> 
                     throw new RuntimeException("Failed to initialize TSDTV inventory", e);
                 }
 
-                bind(ExecutorService.class)
-                        .toInstance(executorService);
-
                 HttpClient httpClient = HttpClients.createDefault();
                 TSDBotClient tsdBotClient = new TSDBotClient(httpClient,
                         tsdbotUrl,
                         tsdtvAgentConfiguration.getAgentId(),
                         tsdtvAgentConfiguration.getPassword(),
                         new ObjectMapper());
+                log.info("Built TSDBot client: {}", tsdBotClient);
                 bind(TSDBotClient.class)
                         .toInstance(tsdBotClient);
             }
         });
 
-        executorService.submit(injector.getInstance(NetworkMonitor.class));
-
-        HeartbeatThread heartbeatThread = injector.getInstance(HeartbeatThread.class);
-        executorService.submit(heartbeatThread);
-
-        JobPollingThread jobPollingThread = injector.getInstance(JobPollingThread.class);
-        executorService.submit(jobPollingThread);
+        Stream.of(injector.getInstance(NetworkMonitor.class),
+                injector.getInstance(HeartbeatThread.class),
+                injector.getInstance(JobPollingThread.class))
+                .map(runnable -> new Thread(runnable, runnable.getClass()+"-ServiceThread"))
+                .peek(thread -> log.warn("Starting thread: {}", thread.getName()))
+                .forEach(Thread::start);
     }
 }

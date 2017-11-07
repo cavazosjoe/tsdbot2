@@ -8,8 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tsd.app.config.TSDTVConfig;
 
-import java.io.File;
-
 public class TSDTVModule extends AbstractModule {
 
     private static final Logger log = LoggerFactory.getLogger(TSDTVModule.class);
@@ -36,8 +34,6 @@ public class TSDTVModule extends AbstractModule {
         FFmpeg ffMpeg;
         try {
             log.info("Binding FFmpeg to: {}", tsdtvConfig.getFfmpegExec());
-            File ffmpegFile = new File(tsdtvConfig.getFfmpegExec());
-            System.err.println("ffmpeg exists="+ffmpegFile.exists()+", "+ffmpegFile);
             ffMpeg = new FFmpeg(tsdtvConfig.getFfmpegExec());
             bind(FFmpeg.class)
                     .toInstance(ffMpeg);

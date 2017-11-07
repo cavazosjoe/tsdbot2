@@ -1,5 +1,7 @@
 package org.tsd.tsdtv;
 
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import net.bramp.ffmpeg.job.FFmpegJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,10 +10,10 @@ import org.tsd.rest.v1.tsdtv.Media;
 import org.tsd.rest.v1.tsdtv.job.*;
 import org.tsd.util.RetryUtil;
 
-import javax.inject.Inject;
 import java.time.Instant;
 import java.util.concurrent.TimeUnit;
 
+@Singleton
 public class JobPollingThread implements Runnable {
 
     private static final Logger log = LoggerFactory.getLogger(JobPollingThread.class);
@@ -61,6 +63,7 @@ public class JobPollingThread implements Runnable {
     }
 
     private void handleJob(Job job) {
+        log.warn("Received job: {}", job);
         if (job instanceof TSDTVPlayJob) {
             int mediaId = ((TSDTVPlayJob) job).getMediaId();
             TSDTVPlayJobResult result = new TSDTVPlayJobResult();

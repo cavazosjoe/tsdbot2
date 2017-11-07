@@ -90,7 +90,8 @@ public class TSDTVResource {
     public Response agentHeartbeat(@Context HttpServletRequest request,
                                    @PathParam("agentId") String agentId,
                                    Heartbeat heartbeat) {
-        log.info("Received TSDTV agent heartbeat: {}", heartbeat);
+        log.info("Received TSDTV agent heartbeat: {}", agentId);
+        log.debug("Heartbeat detail: {}", heartbeat);
         try {
             HeartbeatResponse response = agentRegistry.handleHeartbeat(heartbeat, request.getRemoteAddr());
             return Response.accepted(response).build();

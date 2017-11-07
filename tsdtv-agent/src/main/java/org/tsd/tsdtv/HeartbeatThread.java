@@ -19,7 +19,7 @@ public class HeartbeatThread implements Runnable {
     private static final Logger log = LoggerFactory.getLogger(HeartbeatThread.class);
 
 
-    private static final long PERIOD_SECONDS = 5;
+    private static final long PERIOD_SECONDS = 30;
     private static final long INVENTORY_PERIOD_MINUTES = 30;
 
     private final String agentId;
@@ -79,7 +79,7 @@ public class HeartbeatThread implements Runnable {
             }
 
             try {
-                log.debug("Sleeping for {} ms", sleepSeconds);
+                log.debug("Sleeping for {} seconds", sleepSeconds);
                 Thread.sleep(TimeUnit.SECONDS.toMillis(sleepSeconds));
             } catch (InterruptedException e) {
                 log.error("Interrupted", e);

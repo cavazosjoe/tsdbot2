@@ -82,8 +82,8 @@ public class AgentInventory {
                         .filter(Objects::nonNull)
                         .collect(Collectors.toList()));
 
-        log.info("Built TSDTV inventory: {}", inventory);
-        log.info("Files by ID: {}", filesById);
+        log.debug("Built TSDTV inventory: {}", inventory);
+        log.debug("Files by ID: {}", filesById);
         return inventory;
     }
 

@@ -22,7 +22,7 @@ public class NetworkMonitor implements Runnable {
     private static final long TEST_PERIOD_MILLIS = TimeUnit.MINUTES.toMillis(5);
 
     private static final String TARGET_URI = "http://posttestserver.com/post.php";
-    private static final int UPLOAD_FILE_SIZE = 1_000_000;
+    private static final int UPLOAD_FILE_SIZE = 500_000;
 
     private boolean shutdown = false;
     private SpeedTestReport report = null;
@@ -30,7 +30,7 @@ public class NetworkMonitor implements Runnable {
 
     @Inject
     public NetworkMonitor() {
-
+        log.info("Created NetworkMonitor");
     }
 
     @Override
@@ -47,7 +47,7 @@ public class NetworkMonitor implements Runnable {
                 public void onProgress(float v, SpeedTestReport speedTestReport) {
                     log.debug("Progress {}: bitrate = {} kbit/s",
                             speedTestReport.getProgressPercent(),
-                            report.getTransferRateBit().longValue()/1000);
+                            speedTestReport.getTransferRateBit().longValue() / 1000);
                 }
 
                 @Override
@@ -55,10 +55,12 @@ public class NetworkMonitor implements Runnable {
                     publishError(speedTestError, s);
                 }
             });
+            log.debug("Starting network monitor upload");
             speedTestSocket.startFixedUpload(TARGET_URI,
                     UPLOAD_FILE_SIZE,
                     MAX_DURATION_MILLIS);
             try {
+                log.debug("Finished network monitor upload, sleeping for {} seconds", TEST_PERIOD_MILLIS/1000);
                 Thread.sleep(TEST_PERIOD_MILLIS);
             } catch (InterruptedException e) {
                 log.error("Interrupted", e);

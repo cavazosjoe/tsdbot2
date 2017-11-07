@@ -28,7 +28,7 @@ public class FfmpegUtil {
     private static final String LANGUAGE_TAG = "language";
 
     public static MediaInfo getMediaInfo(FFprobe fFprobe, File file) throws IOException {
-        log.info("Getting media info for file: {}", file);
+        log.debug("Getting media info for file: {}", file);
         FFmpegProbeResult probeResult = fFprobe.probe(file.getAbsolutePath());
         FFmpegFormat format = probeResult.getFormat();
 
@@ -52,7 +52,7 @@ public class FfmpegUtil {
                         videoStream.setAvc(Boolean.parseBoolean(fFmpegStream.is_avc));
                         videoStream.setrFrameRate(fFmpegStream.r_frame_rate.doubleValue());
                         videoStream.setAvgFrameRate(fFmpegStream.avg_frame_rate.doubleValue());
-                        log.info("Parsed video stream: {}", videoStream);
+                        log.debug("Parsed video stream: {}", videoStream);
                         mediaInfo.getVideoStreams().add(videoStream);
                         break;
                     }
@@ -62,7 +62,7 @@ public class FfmpegUtil {
                         audioStream.setChannelLayout(fFmpegStream.channel_layout);
                         audioStream.setLanguage(detectLanguage(audioStream));
                         audioStream.setSampleRate(fFmpegStream.sample_rate);
-                        log.info("Parsed audio stream: {}", audioStream);
+                        log.debug("Parsed audio stream: {}", audioStream);
                         mediaInfo.getAudioStreams().add(audioStream);
                         break;
                     }
@@ -70,7 +70,7 @@ public class FfmpegUtil {
                         SubtitleStream subtitleStream = new SubtitleStream();
                         populateStreamInfo(subtitleStream, fFmpegStream);
                         subtitleStream.setLanguage(detectLanguage(subtitleStream));
-                        log.info("Parsed subtitle stream: {}", subtitleStream);
+                        log.debug("Parsed subtitle stream: {}", subtitleStream);
                         mediaInfo.getSubtitleStreams().add(subtitleStream);
                         break;
                     }
@@ -78,7 +78,7 @@ public class FfmpegUtil {
             }
         }
 
-        log.info("Parsed media info: {}", mediaInfo);
+        log.debug("Parsed media info: {}", mediaInfo);
         return mediaInfo;
     }
 
@@ -124,11 +124,11 @@ public class FfmpegUtil {
     }
 
     private static String escapeSubtitlePath(String filePath) {
-        log.info("Escaping subtitle path: {}", filePath);
+        log.debug("Escaping subtitle path: {}", filePath);
         filePath = filePath.replaceAll("\\\\", "/");
         filePath = filePath.replaceAll(":", "\\\\:");
         filePath = filePath.replaceAll("\\.", "\\\\.");
-        log.info("Escaped subtitle path: {}", filePath);
+        log.debug("Escaped subtitle path: {}", filePath);
         return filePath;
     }
 }
