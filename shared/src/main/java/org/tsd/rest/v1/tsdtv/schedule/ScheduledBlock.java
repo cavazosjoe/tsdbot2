@@ -11,7 +11,16 @@ public class ScheduledBlock {
     private String id;
     private String cronString;
     private String name;
+    private Long nextStartTime;
     private List<ScheduledItem> scheduledItems = new LinkedList<>();
+
+    public Long getNextStartTime() {
+        return nextStartTime;
+    }
+
+    public void setNextStartTime(Long nextStartTime) {
+        this.nextStartTime = nextStartTime;
+    }
 
     public String getId() {
         return id;
@@ -52,6 +61,7 @@ public class ScheduledBlock {
                 .append("cronString", cronString)
                 .append("name", name)
                 .append("scheduledItems", scheduledItems)
+                .append("nextStartTime", nextStartTime)
                 .toString();
     }
 

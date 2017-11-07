@@ -11,7 +11,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tsd.app.TSDTVModule;
+import org.tsd.app.module.TSDTVModule;
 import org.tsd.client.TSDBotClient;
 
 import java.io.File;

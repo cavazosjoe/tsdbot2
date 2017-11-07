@@ -108,6 +108,22 @@
                     '   </div>' +
                     '</div>';
 
+                /* Scheduled blocks */
+                $.each(responseJson.remainingBlocks, function(i, block) {
+                    var startTime = moment(block.startTime).format('MMM DD HH:mm z');
+                    var shows = block.shows.join(', ');
+
+                    htmlString +=
+                        '<div class="panel panel-default">' +
+                        '    <div class="panel-heading">' +
+                        '        <h3 class="panel-title" style="color: #00bc7e">'+startTime+' - '+block.name+'</h3>' +
+                        '    </div>' +
+                        '    <div class="panel-body">' +
+                        '        ' + shows +
+                        '    </div>' +
+                        '</div>';
+                });
+
                 $("#schedule").html(htmlString).text();
 
             }).then(function() {

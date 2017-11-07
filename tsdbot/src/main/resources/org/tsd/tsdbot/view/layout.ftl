@@ -71,13 +71,12 @@
                             </ul>
                         </li>
                         <li>
-                            <a href="#">Filenames</a>
+                            <a href="/filenames">Filenames</a>
                         </li>
                     </ul>
 
                     <ul class="nav navbar-nav navbar-right">
-                        <li><a href="http://builtwithbootstrap.com/" target="_blank">Built With Bootstrap</a></li>
-                        <li><a href="https://wrapbootstrap.com/?ref=bsw" target="_blank">WrapBootstrap</a></li>
+                        <li><a href="#">A TSD Production</a></li>
                     </ul>
                 </div>
             </div>

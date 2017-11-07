@@ -80,7 +80,12 @@ public class TSDTVResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/nowPlaying")
     public Response getNowPlaying() {
-        return Response.ok(tsdtvQueue.getFullQueue()).build();
+        try {
+            return Response.ok(tsdtvQueue.getLineup()).build();
+        } catch (Exception e) {
+            log.error("Error building TSDTV lineup", e);
+            return Response.serverError().build();
+        }
     }
 
     @PUT

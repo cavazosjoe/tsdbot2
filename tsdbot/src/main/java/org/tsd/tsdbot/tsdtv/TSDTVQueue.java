@@ -5,6 +5,9 @@ import com.google.inject.Singleton;
 import net.bramp.ffmpeg.job.FFmpegJob;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.DateUtils;
+import org.quartz.*;
+import org.quartz.impl.matchers.GroupMatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tsd.rest.v1.tsdtv.*;
@@ -14,6 +17,7 @@ import org.tsd.rest.v1.tsdtv.job.TSDTVStopJob;
 import org.tsd.rest.v1.tsdtv.queue.EpisodicInfo;
 import org.tsd.rest.v1.tsdtv.queue.QueuedItem;
 import org.tsd.rest.v1.tsdtv.schedule.ScheduledBlock;
+import org.tsd.rest.v1.tsdtv.schedule.ScheduledBlockSummary;
 import org.tsd.rest.v1.tsdtv.schedule.ScheduledItem;
 import org.tsd.tsdbot.Constants;
 import org.tsd.tsdbot.tsdtv.job.JobQueue;
@@ -24,8 +28,8 @@ import org.tsd.tsdbot.tsdtv.library.TSDTVListing;
 import org.tsd.tsdbot.util.TSDTVUtils;
 import org.tsd.tsdtv.TSDTVPlayer;
 
+import java.time.Clock;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
@@ -40,30 +44,73 @@ public class TSDTVQueue {
     private final JobQueue jobQueue;
     private final TSDTVEpisodicItemDao episodicItemDao;
     private final TSDTVPlayer player;
+    private final Scheduler scheduler;
+    private final Clock clock;
 
     @Inject
-    public TSDTVQueue(ExecutorService executorService,
-                      TSDTVLibrary library,
+    public TSDTVQueue(TSDTVLibrary library,
                       TSDTVEpisodicItemDao episodicItemDao,
                       JobQueue jobQueue,
-                      TSDTVPlayer player) {
+                      TSDTVPlayer player,
+                      Clock clock,
+                      Scheduler scheduler) {
         this.library = library;
         this.jobQueue = jobQueue;
         this.episodicItemDao = episodicItemDao;
         this.player = player;
-        executorService.submit(new QueueManagerThread());
+        this.scheduler = scheduler;
+        this.clock = clock;
+
+        log.warn("Starting QueueManagerThread...");
+        new Thread(new QueueManagerThread()).start();
     }
 
-    public Map<String, Object> getFullQueue() {
-        Map<String, Object> result = new HashMap<>();
+    public Lineup getLineup() throws SchedulerException {
+        Lineup lineup = new Lineup();
         if (nowPlaying != null) {
-            result.put("nowPlaying", nowPlaying);
+            lineup.setNowPlaying(nowPlaying);
         }
         if (queue != null) {
-            result.put("queue", queue);
+            lineup.getQueue().addAll(queue);
         }
-        log.debug("Built full queue response: {}", result);
-        return result;
+        lineup.getRemainingBlocks().addAll(getScheduledBlocks());
+        log.debug("Built lineup: {}", lineup);
+        return lineup;
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<ScheduledBlockSummary> getScheduledBlocks() throws SchedulerException {
+        Date now = new Date(clock.millis());
+        Date cutoff = DateUtils.addHours(now, 24);
+        log.debug("Getting scheduled blocks, now={}, cutoff={}", now, cutoff);
+        List<ScheduledBlockSummary> blocks = new LinkedList<>();
+
+        Set<JobKey> keys = scheduler.getJobKeys(GroupMatcher.groupEquals(Constants.Scheduler.TSDTV_GROUP_ID));
+        for(JobKey key : keys) {
+            List<Trigger> triggers = (List<Trigger>) scheduler.getTriggersOfJob(key);
+            if (CollectionUtils.isNotEmpty(triggers)) {
+                Date nextFireTime = triggers.get(0).getNextFireTime();
+                if (nextFireTime.before(cutoff)) {
+                    JobDetail detail = scheduler.getJobDetail(key);
+                    ScheduledBlock scheduledBlock = (ScheduledBlock) detail.getJobDataMap().get("blockInfo");
+                    ScheduledBlockSummary summary = new ScheduledBlockSummary();
+                    summary.setStartTime(nextFireTime.getTime());
+                    summary.setName(scheduledBlock.getName());
+
+                    Set<String> shows = new HashSet<>();
+                    for (ScheduledItem item : scheduledBlock.getScheduledItems()) {
+                        shows.add(item.getSeries());
+                    }
+                    summary.getShows().addAll(shows);
+
+                    blocks.add(summary);
+                }
+            }
+        }
+
+        blocks.sort(Comparator.comparing(ScheduledBlockSummary::getStartTime));
+        log.debug("Compiled scheduled blocks: {}", blocks);
+        return blocks;
     }
 
     public synchronized boolean add(String agentId, int mediaId) throws TSDTVException {

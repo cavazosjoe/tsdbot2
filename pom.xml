@@ -23,6 +23,7 @@
     <junit.jupiter.version>5.0.0</junit.jupiter.version>
     <guice.version>4.1.0</guice.version>
     <dropwizard.version>1.1.4</dropwizard.version>
+    <quartzVersion>2.2.1</quartzVersion>
   </properties>
 
   <repositories>
@@ -44,6 +45,18 @@
       <groupId>com.google.inject.extensions</groupId>
       <artifactId>guice-assistedinject</artifactId>
       <version>${guice.version}</version>
+    </dependency>
+
+    <!--Quartz-->
+    <dependency>
+      <groupId>org.quartz-scheduler</groupId>
+      <artifactId>quartz</artifactId>
+      <version>${quartzVersion}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.quartz-scheduler</groupId>
+      <artifactId>quartz-jobs</artifactId>
+      <version>${quartzVersion}</version>
     </dependency>
 
     <!--Test-->

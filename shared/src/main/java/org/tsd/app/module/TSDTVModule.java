@@ -1,4 +1,4 @@
-package org.tsd.app;
+package org.tsd.app.module;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.name.Names;
