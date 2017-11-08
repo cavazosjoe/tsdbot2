@@ -4,9 +4,9 @@ import com.google.inject.AbstractModule;
 import com.google.inject.name.Names;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tsd.Constants;
 import org.tsd.app.config.FfmpegConfig;
 import org.tsd.app.module.FfmpegModule;
-import org.tsd.tsdbot.Constants;
 import org.tsd.tsdbot.app.config.TSDTVConfig;
 
 public class TSDTVModule extends AbstractModule {

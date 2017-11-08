@@ -16,7 +16,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tsd.tsdbot.Constants;
+import org.tsd.Constants;
 import org.tsd.tsdbot.util.MiscUtils;
 
 import javax.inject.Inject;
@@ -29,8 +29,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.tsd.tsdbot.Constants.Filenames.MAX_RANDOM_FILENAME_HISTORY;
-import static org.tsd.tsdbot.Constants.Filenames.VALID_FILE_TYPES;
+import static org.tsd.Constants.Filenames.MAX_RANDOM_FILENAME_HISTORY;
+import static org.tsd.Constants.Filenames.VALID_FILE_TYPES;
 
 @Singleton
 public class S3FilenameLibrary implements FilenameLibrary {

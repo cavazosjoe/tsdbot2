@@ -4,7 +4,7 @@ import de.btobastian.javacord.DiscordAPI;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tsd.tsdbot.Constants;
+import org.tsd.Constants;
 import org.tsd.tsdbot.async.ChannelThreadFactory;
 import org.tsd.tsdbot.async.ThreadManager;
 import org.tsd.tsdbot.async.dorj.DorjThread;

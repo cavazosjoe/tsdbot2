@@ -3,7 +3,7 @@ package org.tsd.tsdbot.util;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.rosaloves.bitlyj.Bitly;
-import org.tsd.tsdbot.Constants;
+import org.tsd.Constants;
 
 public class BitlyUtil {
 

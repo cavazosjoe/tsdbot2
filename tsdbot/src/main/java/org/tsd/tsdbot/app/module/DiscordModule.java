@@ -5,7 +5,7 @@ import com.google.inject.name.Names;
 import de.btobastian.javacord.DiscordAPI;
 import de.btobastian.javacord.entities.Server;
 import org.apache.commons.lang3.StringUtils;
-import org.tsd.tsdbot.Constants;
+import org.tsd.Constants;
 import org.tsd.tsdbot.app.DiscordServer;
 import org.tsd.tsdbot.app.config.TSDBotConfiguration;
 import org.tsd.tsdbot.discord.DiscordUser;

@@ -1,4 +1,4 @@
-package org.tsd.tsdbot;
+package org.tsd;
 
 import java.nio.charset.Charset;
 import java.util.Arrays;
@@ -171,6 +171,8 @@ public class Constants {
 
         public static final long AGENT_HEARTBEAT_PERIOD_MILLIS
                 = TimeUnit.MINUTES.toMillis(5);
+
+        public static final long INVENTORY_REFRESH_PERIOD_MINUTES = 30;
 
         // When calculating the start times of items in the queue, assume they won't start immediately
         // after the previous show

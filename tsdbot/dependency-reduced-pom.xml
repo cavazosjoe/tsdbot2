@@ -175,7 +175,6 @@
     </dependencies>
   </dependencyManagement>
   <properties>
-    <quartzVersion>2.2.1</quartzVersion>
     <mainClass>org.tsd.tsdbot.TSDBotApplication</mainClass>
   </properties>
 </project>

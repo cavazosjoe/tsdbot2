@@ -1,7 +1,7 @@
 package org.tsd.tsdbot.util;
 
 import de.btobastian.javacord.entities.Server;
-import org.tsd.tsdbot.Constants;
+import org.tsd.Constants;
 import org.tsd.tsdbot.app.DiscordServer;
 import org.tsd.tsdbot.discord.DiscordUser;
 

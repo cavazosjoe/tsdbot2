@@ -2,7 +2,7 @@ package org.tsd.tsdbot.app.module;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.name.Names;
-import org.tsd.tsdbot.Constants;
+import org.tsd.Constants;
 import org.tsd.tsdbot.app.BotUrl;
 import org.tsd.tsdbot.app.Stage;
 import org.tsd.tsdbot.app.config.TSDBotConfiguration;

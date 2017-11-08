@@ -12,6 +12,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tsd.app.module.FfmpegModule;
+import org.tsd.app.module.UtilityModule;
 import org.tsd.client.TSDBotClient;
 
 import java.io.File;
@@ -43,9 +44,7 @@ public class TSDTVAgentApplication extends Application<TSDTVAgentConfiguration> 
             @Override
             protected void configure() {
 
-                bind(ExecutorService.class)
-                        .toInstance(executorService);
-                log.info("Bound executor service: {}", executorService);
+                install(new UtilityModule());
 
                 log.info("Binding agentId: {}", tsdtvAgentConfiguration.getAgentId());
                 bind(String.class)

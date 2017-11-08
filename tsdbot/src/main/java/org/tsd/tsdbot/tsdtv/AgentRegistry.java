@@ -5,11 +5,12 @@ import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tsd.Constants;
 import org.tsd.rest.v1.tsdtv.Heartbeat;
 import org.tsd.rest.v1.tsdtv.HeartbeatResponse;
-import org.tsd.tsdbot.Constants;
 import org.tsd.tsdbot.tsdtv.job.JobQueue;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -25,15 +26,18 @@ public class AgentRegistry {
     private final Map<String, OnlineAgent> onlineAgents = new ConcurrentHashMap<>();
     private final TSDTVAgentDao tsdtvAgentDao;
     private final JobQueue jobQueue;
+    private final Clock clock;
     private final String tsdtvStreamUrl;
 
     @Inject
     public AgentRegistry(TSDTVAgentDao tsdtvAgentDao,
                          JobQueue jobQueue,
+                         Clock clock,
                          @Named(Constants.Annotations.TSDTV_STREAM_URL) String tsdtvStreamUrl) {
         this.tsdtvAgentDao = tsdtvAgentDao;
         this.jobQueue = jobQueue;
         this.tsdtvStreamUrl = tsdtvStreamUrl;
+        this.clock = clock;
 
         new Thread(new ConnectedAgentReaper()).start();
     }
@@ -54,10 +58,22 @@ public class AgentRegistry {
 
         tsdtvAgentDao.saveAgent(agent);
 
-        onlineAgents.put(agent.getAgentId(), new OnlineAgent(agent, heartbeat));
+        OnlineAgent onlineAgent;
+        if (!onlineAgents.containsKey(agent.getAgentId())) {
+            onlineAgent = new OnlineAgent(agent, heartbeat);
+            onlineAgents.put(agent.getAgentId(), onlineAgent);
+        } else {
+            onlineAgent = onlineAgents.get(agent.getAgentId());
+            onlineAgent.update(heartbeat.getUploadBitrate(), heartbeat.getInventory());
+        }
+
+        boolean agentShouldReportInventory = onlineAgent
+                .getInventoryLastUpdated()
+                .isBefore(LocalDateTime.now(clock).minus(Constants.TSDTV.INVENTORY_REFRESH_PERIOD_MINUTES, ChronoUnit.MINUTES));
 
         HeartbeatResponse response = new HeartbeatResponse();
         response.setSleepSeconds(5);
+        response.setSendInventory(agentShouldReportInventory);
 
         return response;
     }

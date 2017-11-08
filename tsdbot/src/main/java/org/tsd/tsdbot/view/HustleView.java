@@ -4,7 +4,7 @@ import com.googlecode.wickedcharts.highcharts.jackson.JsonRenderer;
 import com.googlecode.wickedcharts.highcharts.options.*;
 import com.googlecode.wickedcharts.highcharts.options.series.SimpleSeries;
 import io.dropwizard.views.View;
-import org.tsd.tsdbot.Constants;
+import org.tsd.Constants;
 import org.tsd.tsdbot.hustle.HustleDataPoint;
 
 import java.time.LocalDateTime;

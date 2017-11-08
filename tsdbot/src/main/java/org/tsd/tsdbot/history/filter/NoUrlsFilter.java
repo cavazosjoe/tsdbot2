@@ -1,6 +1,6 @@
 package org.tsd.tsdbot.history.filter;
 
-import org.tsd.tsdbot.Constants;
+import org.tsd.Constants;
 import org.tsd.tsdbot.discord.DiscordMessage;
 
 public class NoUrlsFilter implements MessageHistoryFilter {

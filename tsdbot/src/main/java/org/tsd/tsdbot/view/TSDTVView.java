@@ -1,7 +1,7 @@
 package org.tsd.tsdbot.view;
 
 import io.dropwizard.views.View;
-import org.tsd.tsdbot.Constants;
+import org.tsd.Constants;
 import org.tsd.tsdbot.tsdtv.library.TSDTVLibrary;
 import org.tsd.tsdbot.tsdtv.library.TSDTVListing;
 

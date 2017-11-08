@@ -11,6 +11,7 @@ public class OnlineAgent {
 
     private TSDTVAgent agent;
     private LocalDateTime lastHeartbeat;
+    private LocalDateTime inventoryLastUpdated = LocalDateTime.MIN;
     private Double bitrate;
     private Inventory inventory;
 
@@ -19,6 +20,19 @@ public class OnlineAgent {
         this.lastHeartbeat = LocalDateTime.now();
         this.inventory = heartbeat.getInventory();
         this.bitrate = heartbeat.getUploadBitrate();
+    }
+
+    public void update(Double bitrate, Inventory inventory) {
+        this.lastHeartbeat = LocalDateTime.now();
+        this.bitrate = bitrate;
+        if (inventory != null) {
+            this.inventory = inventory;
+            this.inventoryLastUpdated = LocalDateTime.now();
+        }
+    }
+
+    public LocalDateTime getInventoryLastUpdated() {
+        return inventoryLastUpdated;
     }
 
     public LocalDateTime getLastHeartbeat() {

@@ -14,7 +14,6 @@ logging:
         timeZone: UTC
   loggers:
     net.bramp: WARN
-    org.tsd.tsdtv.JobPollingThread: DEBUG
 
 ffmpeg:
   ffmpegExec: "/home/joe/bin/ffmpeg"

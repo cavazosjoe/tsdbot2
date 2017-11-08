@@ -4,7 +4,7 @@ import org.apache.commons.collections4.queue.CircularFifoQueue;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tsd.tsdbot.Constants;
+import org.tsd.Constants;
 import org.tsd.tsdbot.discord.DiscordMessage;
 import org.tsd.tsdbot.discord.MessageRecipient;
 import org.tsd.tsdbot.discord.MessageType;

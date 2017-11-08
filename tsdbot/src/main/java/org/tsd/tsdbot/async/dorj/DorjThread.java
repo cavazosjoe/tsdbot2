@@ -4,7 +4,7 @@ import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tsd.tsdbot.Constants;
+import org.tsd.Constants;
 import org.tsd.tsdbot.async.ChannelThread;
 import org.tsd.tsdbot.async.ThreadManager;
 import org.tsd.tsdbot.discord.DiscordChannel;

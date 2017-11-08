@@ -11,9 +11,9 @@ import org.quartz.impl.matchers.GroupMatcher;
 import org.quartz.utils.Key;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tsd.Constants;
 import org.tsd.rest.v1.tsdtv.schedule.Schedule;
 import org.tsd.rest.v1.tsdtv.schedule.ScheduledBlock;
-import org.tsd.tsdbot.Constants;
 
 import java.io.IOException;
 import java.util.LinkedList;

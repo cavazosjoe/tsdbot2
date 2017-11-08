@@ -1,7 +1,7 @@
 package org.tsd.tsdbot.history.filter;
 
 import com.google.inject.name.Named;
-import org.tsd.tsdbot.Constants;
+import org.tsd.Constants;
 import org.tsd.tsdbot.discord.DiscordMessage;
 import org.tsd.tsdbot.discord.DiscordUser;
 

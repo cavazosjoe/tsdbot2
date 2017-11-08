@@ -15,7 +15,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tsd.tsdbot.Constants;
+import org.tsd.Constants;
 import org.tsd.tsdbot.discord.DiscordUser;
 import org.tsd.tsdbot.util.MiscUtils;
 
@@ -27,7 +27,7 @@ import java.io.ByteArrayOutputStream;
 import java.net.URL;
 import java.util.*;
 
-import static org.tsd.tsdbot.Constants.Printout.GIS_API_TARGET;
+import static org.tsd.Constants.Printout.GIS_API_TARGET;
 
 @Singleton
 public class PrintoutLibrary {
