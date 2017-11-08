@@ -15,13 +15,9 @@ import io.dropwizard.setup.Environment;
 import io.dropwizard.views.ViewBundle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tsd.app.module.TSDTVModule;
 import org.tsd.app.module.UtilityModule;
 import org.tsd.tsdbot.app.config.TSDBotConfiguration;
-import org.tsd.tsdbot.app.module.DiscordModule;
-import org.tsd.tsdbot.app.module.HibernateModule;
-import org.tsd.tsdbot.app.module.S3Module;
-import org.tsd.tsdbot.app.module.TSDBotModule;
+import org.tsd.tsdbot.app.module.*;
 import org.tsd.tsdbot.async.ChannelThreadFactory;
 import org.tsd.tsdbot.discord.DiscordChannel;
 import org.tsd.tsdbot.filename.FilenameLibrary;
@@ -91,7 +87,7 @@ public class TSDBotApplication extends Application<TSDBotConfiguration> {
                 install(new DiscordModule(api, configuration));
                 install(new HibernateModule(hibernate));
                 install(new TSDBotModule(configuration));
-                install(new TSDTVModule(configuration.getTsdtv()));
+                install(new TSDTVModule(configuration.getFfmpeg(), configuration.getTsdtv()));
 
                 bind(Twitter.class)
                         .toInstance(TwitterFactory.getSingleton());

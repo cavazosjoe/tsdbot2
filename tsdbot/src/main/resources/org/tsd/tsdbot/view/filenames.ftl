@@ -1,6 +1,6 @@
 <#-- @ftlvariable name="" type="org.tsd.tsdbot.view.FilenamesView" -->
 <#import "layout.ftl" as layout>
-<@layout.layout>
+<@layout.layout title="TSD Filenames Database">
     <h1>Filenames</h1>
     <div>
         <ul>

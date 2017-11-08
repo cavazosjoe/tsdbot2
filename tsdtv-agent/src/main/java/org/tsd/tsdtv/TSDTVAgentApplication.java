@@ -11,7 +11,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tsd.app.module.TSDTVModule;
+import org.tsd.app.module.FfmpegModule;
 import org.tsd.client.TSDBotClient;
 
 import java.io.File;
@@ -63,7 +63,7 @@ public class TSDTVAgentApplication extends Application<TSDTVAgentConfiguration> 
                     throw new RuntimeException("Invalid TSDBot URL: " + tsdtvAgentConfiguration.getTsdbotUrl(), e);
                 }
 
-                install(new TSDTVModule(tsdtvAgentConfiguration.getTsdtv()));
+                install(new FfmpegModule(tsdtvAgentConfiguration.getFfmpeg()));
 
                 log.info("Binding password: {}", tsdtvAgentConfiguration.getPassword());
                 bind(String.class)

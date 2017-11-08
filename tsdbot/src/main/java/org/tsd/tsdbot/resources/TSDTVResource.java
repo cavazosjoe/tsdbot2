@@ -30,19 +30,19 @@ public class TSDTVResource {
 
     private final AgentRegistry agentRegistry;
     private final TSDTVLibrary tsdtvLibrary;
-    private final TSDTVQueue tsdtvQueue;
+    private final TSDTV tsdtv;
     private final String ownerKey;
     private final FileUtils fileUtils;
 
     @Inject
     public TSDTVResource(AgentRegistry agentRegistry,
                          TSDTVLibrary tsdtvLibrary,
-                         TSDTVQueue tsdtvQueue,
+                         TSDTV tsdtv,
                          FileUtils fileUtils,
                          @Named(Constants.Annotations.OWNER_KEY) String ownerKey) {
         this.agentRegistry = agentRegistry;
         this.tsdtvLibrary = tsdtvLibrary;
-        this.tsdtvQueue = tsdtvQueue;
+        this.tsdtv = tsdtv;
         this.ownerKey = ownerKey;
         this.fileUtils = fileUtils;
     }
@@ -81,7 +81,7 @@ public class TSDTVResource {
     @Path("/nowPlaying")
     public Response getNowPlaying() {
         try {
-            return Response.ok(tsdtvQueue.getLineup()).build();
+            return Response.ok(tsdtv.getLineup()).build();
         } catch (Exception e) {
             log.error("Error building TSDTV lineup", e);
             return Response.serverError().build();
@@ -112,7 +112,7 @@ public class TSDTVResource {
     public Response play(PlayMediaRequest playMediaRequest) {
         log.info("Received playMedia instruction: data={}", playMediaRequest);
         try {
-            tsdtvQueue.add(playMediaRequest.getAgentId(), Integer.parseInt(playMediaRequest.getMediaId()));
+            tsdtv.add(playMediaRequest.getAgentId(), Integer.parseInt(playMediaRequest.getMediaId()));
             return Response.accepted("Accepted").build();
         } catch (TSDTVException e) {
             return Response.serverError().entity(e.getMessage()).build();
@@ -128,7 +128,7 @@ public class TSDTVResource {
         if (!StringUtils.equals(password, ownerKey)) {
             throw new NotAuthorizedException("Invalid password");
         }
-        tsdtvQueue.stopNowPlaying();
+        tsdtv.stopNowPlaying();
         return Response.accepted("Accepted").build();
     }
 
@@ -142,7 +142,7 @@ public class TSDTVResource {
         if (!StringUtils.equals(password, ownerKey)) {
             throw new NotAuthorizedException("Invalid password");
         }
-        tsdtvQueue.reportStopped(notification.getMediaId());
+        tsdtv.reportStopped(notification.getMediaId());
         return Response.accepted("Accepted").build();
     }
 }

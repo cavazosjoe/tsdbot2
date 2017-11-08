@@ -16,8 +16,7 @@ logging:
     net.bramp: WARN
     org.tsd.tsdtv.JobPollingThread: DEBUG
 
-tsdtv:
-  streamUrl: "rtmp://tsdtv.teamschoolyd.net/tsdtvApp/tsdtv"
+ffmpeg:
   ffmpegExec: "/home/joe/bin/ffmpeg"
   ffprobeExec: "/home/joe/bin/ffprobe"
 

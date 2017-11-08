@@ -14,7 +14,7 @@ import org.tsd.tsdbot.Constants;
 import org.tsd.tsdbot.discord.DiscordChannel;
 import org.tsd.tsdbot.discord.DiscordMessage;
 import org.tsd.tsdbot.listener.MessageHandler;
-import org.tsd.tsdbot.tsdtv.TSDTVQueue;
+import org.tsd.tsdbot.tsdtv.TSDTV;
 import org.tsd.tsdbot.tsdtv.TSDTVScheduler;
 import org.tsd.tsdbot.tsdtv.library.AgentMedia;
 import org.tsd.tsdbot.tsdtv.library.TSDTVLibrary;
@@ -33,19 +33,19 @@ public class TSDTVHandler extends MessageHandler<DiscordChannel> {
     private static final Logger log = LoggerFactory.getLogger(TSDTVHandler.class);
 
     private final AuthUtil authUtil;
-    private final TSDTVQueue queue;
+    private final TSDTV queue;
     private final TSDTVScheduler scheduler;
     private final TSDTVLibrary library;
 
     @Inject
     public TSDTVHandler(DiscordAPI api,
                         AuthUtil authUtil,
-                        TSDTVQueue tsdtvQueue,
+                        TSDTV tsdtv,
                         TSDTVLibrary tsdtvLibrary,
                         TSDTVScheduler tsdtvScheduler) {
         super(api);
         this.authUtil = authUtil;
-        this.queue = tsdtvQueue;
+        this.queue = tsdtv;
         this.library = tsdtvLibrary;
         this.scheduler = tsdtvScheduler;
     }

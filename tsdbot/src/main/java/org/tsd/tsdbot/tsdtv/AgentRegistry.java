@@ -2,6 +2,7 @@ package org.tsd.tsdbot.tsdtv;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tsd.rest.v1.tsdtv.Heartbeat;
@@ -13,7 +14,6 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -25,14 +25,17 @@ public class AgentRegistry {
     private final Map<String, OnlineAgent> onlineAgents = new ConcurrentHashMap<>();
     private final TSDTVAgentDao tsdtvAgentDao;
     private final JobQueue jobQueue;
+    private final String tsdtvStreamUrl;
 
     @Inject
-    public AgentRegistry(ExecutorService executorService,
-                         TSDTVAgentDao tsdtvAgentDao,
-                         JobQueue jobQueue) {
+    public AgentRegistry(TSDTVAgentDao tsdtvAgentDao,
+                         JobQueue jobQueue,
+                         @Named(Constants.Annotations.TSDTV_STREAM_URL) String tsdtvStreamUrl) {
         this.tsdtvAgentDao = tsdtvAgentDao;
         this.jobQueue = jobQueue;
-        executorService.submit(new ConnectedAgentReaper());
+        this.tsdtvStreamUrl = tsdtvStreamUrl;
+
+        new Thread(new ConnectedAgentReaper()).start();
     }
 
     public HeartbeatResponse handleHeartbeat(Heartbeat heartbeat, String ipAddress) throws BlacklistedAgentException {

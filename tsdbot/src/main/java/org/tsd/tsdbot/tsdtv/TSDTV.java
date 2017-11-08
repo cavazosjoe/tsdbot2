@@ -2,10 +2,13 @@ package org.tsd.tsdbot.tsdtv;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.google.inject.name.Named;
+import de.btobastian.javacord.entities.Server;
 import net.bramp.ffmpeg.job.FFmpegJob;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
+import org.apache.http.client.utils.URIBuilder;
 import org.quartz.*;
 import org.quartz.impl.matchers.GroupMatcher;
 import org.slf4j.Logger;
@@ -20,6 +23,9 @@ import org.tsd.rest.v1.tsdtv.schedule.ScheduledBlock;
 import org.tsd.rest.v1.tsdtv.schedule.ScheduledBlockSummary;
 import org.tsd.rest.v1.tsdtv.schedule.ScheduledItem;
 import org.tsd.tsdbot.Constants;
+import org.tsd.tsdbot.app.BotUrl;
+import org.tsd.tsdbot.app.DiscordServer;
+import org.tsd.tsdbot.discord.DiscordChannel;
 import org.tsd.tsdbot.tsdtv.job.JobQueue;
 import org.tsd.tsdbot.tsdtv.job.JobTimeoutException;
 import org.tsd.tsdbot.tsdtv.library.AgentMedia;
@@ -28,14 +34,16 @@ import org.tsd.tsdbot.tsdtv.library.TSDTVListing;
 import org.tsd.tsdbot.util.TSDTVUtils;
 import org.tsd.tsdtv.TSDTVPlayer;
 
+import java.net.URL;
 import java.time.Clock;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Singleton
-public class TSDTVQueue {
+public class TSDTV {
 
-    private static final Logger log = LoggerFactory.getLogger(TSDTVQueue.class);
+    private static final Logger log = LoggerFactory.getLogger(TSDTV.class);
 
     private QueuedItem nowPlaying;
     private final List<QueuedItem> queue = new LinkedList<>();
@@ -46,20 +54,40 @@ public class TSDTVQueue {
     private final TSDTVPlayer player;
     private final Scheduler scheduler;
     private final Clock clock;
+    private final String tsdtvStreamUrl;
+    private final DiscordChannel channel;
+    private final URL botUrl;
 
     @Inject
-    public TSDTVQueue(TSDTVLibrary library,
-                      TSDTVEpisodicItemDao episodicItemDao,
-                      JobQueue jobQueue,
-                      TSDTVPlayer player,
-                      Clock clock,
-                      Scheduler scheduler) {
+    public TSDTV(TSDTVLibrary library,
+                 TSDTVEpisodicItemDao episodicItemDao,
+                 JobQueue jobQueue,
+                 TSDTVPlayer player,
+                 Clock clock,
+                 Scheduler scheduler,
+                 @BotUrl URL botUrl,
+                 @DiscordServer Server server,
+                 @Named(Constants.Annotations.TSDTV_STREAM_URL) String tsdtvStreamUrl,
+                 @Named(Constants.Annotations.TSDTV_CHANNEL) String tsdtvChannel) {
         this.library = library;
         this.jobQueue = jobQueue;
         this.episodicItemDao = episodicItemDao;
         this.player = player;
         this.scheduler = scheduler;
         this.clock = clock;
+        this.tsdtvStreamUrl = tsdtvStreamUrl;
+        this.botUrl = botUrl;
+
+        Optional<DiscordChannel> channel = server.getChannels()
+                .stream()
+                .filter(c -> StringUtils.equalsIgnoreCase(c.getName(), tsdtvChannel))
+                .map(DiscordChannel::new)
+                .findAny();
+        if (!channel.isPresent()) {
+            throw new RuntimeException("Could not find TSDTV channel: " + tsdtvChannel);
+        }
+        this.channel = channel.get();
+        log.info("Initialized TSDTV, channel={}", this.channel);
 
         log.warn("Starting QueueManagerThread...");
         new Thread(new QueueManagerThread()).start();
@@ -187,7 +215,7 @@ public class TSDTVQueue {
                 Commercial commercial = (Commercial) queuedItem.getMedia();
                 try {
                     log.info("Playing commercial: {}", commercial);
-                    player.play(queuedItem.getMedia(), (state) -> {
+                    player.play(queuedItem.getMedia(), tsdtvStreamUrl, (state) -> {
                         if (state.equals(FFmpegJob.State.FINISHED)) {
                             log.info("Commercial stream ended normally");
                         } else {
@@ -211,6 +239,7 @@ public class TSDTVQueue {
                 // job request to send to agent
                 TSDTVPlayJob playJob = new TSDTVPlayJob();
                 playJob.setMediaId(media.getId());
+                playJob.setTargetUrl(tsdtvStreamUrl);
                 try {
                     log.info("Sending play request to agent: {}", media.getAgentId());
                     TSDTVPlayJobResult result
@@ -225,6 +254,11 @@ public class TSDTVQueue {
                     queuedItem.updateEndTime();
                     log.info("Set nowPlaying start/end times, {} -> {}", queuedItem.getStartTime(), queuedItem.getEndTime());
                     this.nowPlaying = queuedItem;
+
+                    StringBuilder nowPlayingMessage = new StringBuilder("[TSDTV] NOW PLAYING: ")
+                            .append(getMediaString(this.nowPlaying.getMedia()))
+                            .append(" -- ").append(getBrowserLink());
+                    channel.sendMessage(nowPlayingMessage.toString());
 
                     long lastItemEndTime = queuedItem.getEndTime();
                     for (QueuedItem inQueue : queue) {
@@ -343,14 +377,40 @@ public class TSDTVQueue {
             }
         }
 
-        for (QueuedItem queuedItem : toPlay) {
-            try {
-                log.info("Adding scheduled item to queue: {}", queuedItem);
-                add(queuedItem);
-            } catch (Exception e) {
-                log.error("Error adding scheduled item to queue: " + queuedItem, e);
+        if (CollectionUtils.isNotEmpty(toPlay)) {
+            String notification = "[TSDTV] @here Scheduled block now starting: " +
+                    block.getName() + "." +
+                    "Lined up: " + buildShowsPlayingInBlock(toPlay) +
+                    " -- " + getBrowserLink();
+            channel.sendMessage(notification);
+
+            for (QueuedItem queuedItem : toPlay) {
+                try {
+                    log.info("Adding scheduled item to queue: {}", queuedItem);
+                    add(queuedItem);
+                } catch (Exception e) {
+                    log.error("Error adding scheduled item to queue: " + queuedItem, e);
+                }
             }
+        } else {
+            log.error("Could not play any shows for block: {}", block);
         }
+    }
+    
+    private static String buildShowsPlayingInBlock(List<QueuedItem> blockItems) {
+        LinkedHashSet<String> shows = new LinkedHashSet<>();
+        shows.addAll(
+                blockItems.stream()
+                        .map(queuedItem -> {
+                            if (queuedItem.getMedia() instanceof Episode) {
+                                return ((Episode) queuedItem.getMedia()).getSeriesName();
+                            } else if (queuedItem.getMedia() instanceof Movie) {
+                                return ((Movie) queuedItem.getMedia()).getName();
+                            }
+                            return "UNKNOWN";
+                        })
+                        .collect(Collectors.toSet()));
+        return StringUtils.join(shows, ", ");
     }
 
     private Episode findEpisodeToPlay(ScheduledItem scheduledItem,
@@ -407,6 +467,33 @@ public class TSDTVQueue {
 
         log.info("Matching episode: {}", matchingEpisode);
         return matchingEpisode;
+    }
+
+    private String getMediaString(Media media) {
+        if (media instanceof Episode) {
+            Episode episode = (Episode) media;
+            StringBuilder builder = new StringBuilder(episode.getSeriesName());
+            if (StringUtils.isNotBlank(episode.getSeasonName())) {
+                builder.append(", ").append(episode.getSeasonName());
+            }
+            builder.append(": ").append(episode.getName());
+            return builder.toString();
+        } else if (media instanceof Movie) {
+            Movie movie = (Movie) media;
+            return movie.getName();
+        } else {
+            return "UNKNOWN";
+        }
+    }
+
+    private String getBrowserLink() {
+        try {
+            return new URIBuilder(botUrl.toURI())
+                    .setPath("/tsdtv")
+                    .toString();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     class QueueManagerThread implements Runnable {

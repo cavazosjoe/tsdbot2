@@ -66,6 +66,7 @@ public class JobPollingThread implements Runnable {
         log.warn("Received job: {}", job);
         if (job instanceof TSDTVPlayJob) {
             int mediaId = ((TSDTVPlayJob) job).getMediaId();
+            String targetUrl = ((TSDTVPlayJob) job).getTargetUrl();
             TSDTVPlayJobResult result = new TSDTVPlayJobResult();
             result.setJobId(job.getId());
             try {
@@ -74,7 +75,7 @@ public class JobPollingThread implements Runnable {
                     throw new Exception("Could not find media in inventory with id "+mediaId);
                 }
                 log.info("Found media: {}", media);
-                player.play(media, state -> {
+                player.play(media, targetUrl, state -> {
                     boolean error = !FFmpegJob.State.FINISHED.equals(state);
                     RetryUtil.executeWithRetry(5,
                             TimeUnit.SECONDS.toMillis(1),

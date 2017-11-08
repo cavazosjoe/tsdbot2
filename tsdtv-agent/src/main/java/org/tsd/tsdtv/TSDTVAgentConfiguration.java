@@ -2,7 +2,7 @@ package org.tsd.tsdtv;
 
 import io.dropwizard.Configuration;
 import org.hibernate.validator.constraints.NotEmpty;
-import org.tsd.app.config.TSDTVConfig;
+import org.tsd.app.config.FfmpegConfig;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -27,7 +27,7 @@ public class TSDTVAgentConfiguration extends Configuration {
 
     @NotNull
     @Valid
-    private TSDTVConfig tsdtv;
+    private FfmpegConfig ffmpeg;
 
     public String getPassword() {
         return password;
@@ -61,11 +61,11 @@ public class TSDTVAgentConfiguration extends Configuration {
         this.agentId = agentId;
     }
 
-    public TSDTVConfig getTsdtv() {
-        return tsdtv;
+    public FfmpegConfig getFfmpeg() {
+        return ffmpeg;
     }
 
-    public void setTsdtv(TSDTVConfig tsdtv) {
-        this.tsdtv = tsdtv;
+    public void setFfmpeg(FfmpegConfig ffmpeg) {
+        this.ffmpeg = ffmpeg;
     }
 }

@@ -2,7 +2,6 @@ package org.tsd.tsdtv;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.google.inject.name.Named;
 import net.bramp.ffmpeg.FFmpeg;
 import net.bramp.ffmpeg.FFmpegExecutor;
 import net.bramp.ffmpeg.FFprobe;
@@ -28,24 +27,21 @@ public class TSDTVPlayer {
 
     private final FFmpeg fFmpeg;
     private final FFprobe fFprobe;
-    private final String tsdtvUrl;
     private final ExecutorService executorService;
 
     @Inject
     public TSDTVPlayer(ExecutorService executorService,
                        FFmpeg fFmpeg,
-                       FFprobe fFprobe,
-                       @Named("tsdtvStreamUrl") String tsdtvUrl) {
+                       FFprobe fFprobe) {
         this.fFmpeg = fFmpeg;
         this.fFprobe = fFprobe;
-        this.tsdtvUrl = tsdtvUrl;
         this.executorService = executorService;
     }
 
-    public void play(Media media, Consumer<FFmpegJob.State> handleEnd) throws Exception {
-        log.info("Playing media: {}", media);
+    public void play(Media media, String targetUrl, Consumer<FFmpegJob.State> handleEnd) throws Exception {
+        log.info("Playing media, targetUrl={}, media={}", targetUrl, media);
 
-        FFmpegBuilder builder = FfmpegUtil.buildFfmpeg(media, tsdtvUrl);
+        FFmpegBuilder builder = FfmpegUtil.buildFfmpeg(media, targetUrl);
         FFmpegExecutor executor = new FFmpegExecutor(fFmpeg, fFprobe);
         runningStream = executor.createJob(builder, progress -> {
             if (progress.isEnd()) {

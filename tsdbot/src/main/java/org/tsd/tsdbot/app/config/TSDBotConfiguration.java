@@ -3,7 +3,7 @@ package org.tsd.tsdbot.app.config;
 import io.dropwizard.Configuration;
 import io.dropwizard.db.DataSourceFactory;
 import org.hibernate.validator.constraints.NotEmpty;
-import org.tsd.app.config.TSDTVConfig;
+import org.tsd.app.config.FfmpegConfig;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -61,6 +61,10 @@ public class TSDBotConfiguration extends Configuration {
 
     @Valid
     @NotNull
+    private FfmpegConfig ffmpeg;
+
+    @Valid
+    @NotNull
     private TSDTVConfig tsdtv;
 
     public String getOwnerKey() {
@@ -69,6 +73,14 @@ public class TSDBotConfiguration extends Configuration {
 
     public void setOwnerKey(String ownerKey) {
         this.ownerKey = ownerKey;
+    }
+
+    public FfmpegConfig getFfmpeg() {
+        return ffmpeg;
+    }
+
+    public void setFfmpeg(FfmpegConfig ffmpeg) {
+        this.ffmpeg = ffmpeg;
     }
 
     public TSDTVConfig getTsdtv() {

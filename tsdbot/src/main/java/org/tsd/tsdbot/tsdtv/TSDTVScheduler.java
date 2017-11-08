@@ -29,19 +29,19 @@ public class TSDTVScheduler {
 
     private static final Logger log = LoggerFactory.getLogger(TSDTVScheduler.class);
 
-    private final TSDTVQueue tsdtvQueue;
+    private final TSDTV tsdtv;
     private final Scheduler scheduler;
     private final AmazonS3 s3Client;
     private final String tsdtvBucket;
     private final ObjectMapper objectMapper;
 
     @Inject
-    public TSDTVScheduler(TSDTVQueue tsdtvQueue,
+    public TSDTVScheduler(TSDTV tsdtv,
                           AmazonS3 s3Client,
                           ObjectMapper objectMapper,
                           Scheduler scheduler,
                           @Named(Constants.Annotations.S3_TSDTV_BUCKET) String tsdtvBucket) {
-        this.tsdtvQueue = tsdtvQueue;
+        this.tsdtv = tsdtv;
         this.s3Client = s3Client;
         this.tsdtvBucket = tsdtvBucket;
         this.objectMapper = objectMapper;
@@ -89,7 +89,7 @@ public class TSDTVScheduler {
         public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
             ScheduledBlock block = (ScheduledBlock) jobExecutionContext.getJobDetail().getJobDataMap().get("blockInfo");
             log.warn("Executing scheduled block job: {}", block);
-            tsdtvQueue.startScheduledBlock(block);
+            tsdtv.startScheduledBlock(block);
         }
     }
 }
