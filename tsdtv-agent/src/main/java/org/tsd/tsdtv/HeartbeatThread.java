@@ -50,8 +50,9 @@ public class HeartbeatThread implements Runnable {
 
             Inventory inventory = null;
             if (shouldRefreshInventory()) {
+                log.info("Inventory last sent: {}, sending...", inventoryLastSent);
                 inventory = agentInventory.compileInventory();
-                inventoryLastSent = LocalDateTime.now();
+                inventoryLastSent = LocalDateTime.now(clock);
             }
 
             Heartbeat heartbeat = new Heartbeat();
@@ -76,6 +77,7 @@ public class HeartbeatThread implements Runnable {
                 response = tsdBotClient.sendTsdtvAgentHeartbeat(heartbeat);
                 sleepSeconds = response.getSleepSeconds();
                 if (response.isSendInventory()) {
+                    log.info("Agent should send inventory in next heartbeat");
                     inventoryLastSent = LocalDateTime.MIN;
                 }
             } catch (Exception e ) {
