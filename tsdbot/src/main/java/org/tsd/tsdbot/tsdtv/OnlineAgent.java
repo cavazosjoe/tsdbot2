@@ -2,7 +2,7 @@ package org.tsd.tsdbot.tsdtv;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.tsd.rest.v1.tsdtv.Heartbeat;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.tsd.rest.v1.tsdtv.Inventory;
 
 import java.time.LocalDateTime;
@@ -15,20 +15,8 @@ public class OnlineAgent {
     private Double bitrate;
     private Inventory inventory;
 
-    public OnlineAgent(TSDTVAgent agent, Heartbeat heartbeat) {
-        this.agent = agent;
-        this.lastHeartbeat = LocalDateTime.now();
-        this.inventory = heartbeat.getInventory();
-        this.bitrate = heartbeat.getUploadBitrate();
-    }
-
-    public void update(Double bitrate, Inventory inventory) {
-        this.lastHeartbeat = LocalDateTime.now();
-        this.bitrate = bitrate;
-        if (inventory != null) {
-            this.inventory = inventory;
-            this.inventoryLastUpdated = LocalDateTime.now();
-        }
+    public void setInventoryLastUpdated(LocalDateTime inventoryLastUpdated) {
+        this.inventoryLastUpdated = inventoryLastUpdated;
     }
 
     public LocalDateTime getInventoryLastUpdated() {
@@ -85,5 +73,17 @@ public class OnlineAgent {
         return new HashCodeBuilder(17, 37)
                 .append(agent)
                 .toHashCode();
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("agent", agent)
+                .append("lastHeartbeat", lastHeartbeat)
+                .append("inventoryLastUpdated", inventoryLastUpdated)
+                .append("bitrate", bitrate)
+                .append("shows.size", inventory.getSeries().size())
+                .append("movies.size", inventory.getMovies().size())
+                .toString();
     }
 }

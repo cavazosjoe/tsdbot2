@@ -43,6 +43,7 @@ public class AgentRegistry {
     }
 
     public HeartbeatResponse handleHeartbeat(Heartbeat heartbeat, String ipAddress) throws BlacklistedAgentException {
+        log.debug("Handling heartbeat, ipAddress={}, agentId={}", heartbeat.getAgentId());
         TSDTVAgent agent = tsdtvAgentDao.getAgentByAgentId(heartbeat.getAgentId());
         if (agent == null) {
             // this is an agent we've never seen before
@@ -50,32 +51,54 @@ public class AgentRegistry {
             agent.setAgentId(heartbeat.getAgentId());
             agent.setStatus(AgentStatus.unregistered);
             agent.setLastHeartbeatFrom(ipAddress);
+            log.debug("Creating new TSDTVAgent in database: {}", agent);
         } else if (AgentStatus.blacklisted.equals(agent.getStatus())) {
             throw new BlacklistedAgentException(heartbeat.getAgentId());
         } else {
             agent.setLastHeartbeatFrom(ipAddress);
+            log.debug("Updating TSDTVAgent in database: {}", agent);
         }
 
         tsdtvAgentDao.saveAgent(agent);
 
         OnlineAgent onlineAgent;
         if (!onlineAgents.containsKey(agent.getAgentId())) {
-            onlineAgent = new OnlineAgent(agent, heartbeat);
+            log.debug("Agent {} is newly online, adding...", agent.getAgentId());
+            onlineAgent = new OnlineAgent();
             onlineAgents.put(agent.getAgentId(), onlineAgent);
         } else {
             onlineAgent = onlineAgents.get(agent.getAgentId());
-            onlineAgent.update(heartbeat.getUploadBitrate(), heartbeat.getInventory());
         }
 
+        updateOnlineAgent(onlineAgent, agent, heartbeat);
+        log.debug("Updated online agent info: {}", onlineAgent);
+
+        LocalDateTime inventoryExpiration
+                = LocalDateTime.now(clock).minus(Constants.TSDTV.INVENTORY_REFRESH_PERIOD_MINUTES, ChronoUnit.MINUTES);
+        LocalDateTime now = LocalDateTime.now(clock);
+        log.debug("Inventory for {} last reported on: {}", onlineAgent.getInventoryLastUpdated());
+        log.debug("Inventory for {} expires on: {} (now = {})", inventoryExpiration, now);
         boolean agentShouldReportInventory = onlineAgent
                 .getInventoryLastUpdated()
-                .isBefore(LocalDateTime.now(clock).minus(Constants.TSDTV.INVENTORY_REFRESH_PERIOD_MINUTES, ChronoUnit.MINUTES));
+                .isBefore(inventoryExpiration);
 
         HeartbeatResponse response = new HeartbeatResponse();
-        response.setSleepSeconds(5);
+        response.setSleepSeconds(20);
         response.setSendInventory(agentShouldReportInventory);
+        log.debug("Returning heartbeat response for {}: {}", agent.getAgentId(), response);
 
         return response;
+    }
+
+    private void updateOnlineAgent(OnlineAgent onlineAgent, TSDTVAgent agent, Heartbeat heartbeat) {
+        onlineAgent.setAgent(agent);
+        onlineAgent.setLastHeartbeat(LocalDateTime.now(clock));
+        onlineAgent.setBitrate(heartbeat.getUploadBitrate());
+        if (heartbeat.getInventory() != null) {
+            log.debug("Updating inventory for agent {}: {}", agent.getAgentId(), heartbeat.getInventory());
+            onlineAgent.setInventory(heartbeat.getInventory());
+            onlineAgent.setInventoryLastUpdated(LocalDateTime.now(clock));
+        }
     }
 
     public void registerAgent(String agentId) {
