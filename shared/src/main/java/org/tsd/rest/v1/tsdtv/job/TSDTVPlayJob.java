@@ -28,6 +28,8 @@ public class TSDTVPlayJob extends Job {
                 .append("mediaId", mediaId)
                 .append("targetUrl", targetUrl)
                 .append("id", id)
+                .append("agentId", agentId)
+                .append("timeoutMillis", timeoutMillis)
                 .toString();
     }
 }

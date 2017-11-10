@@ -13,6 +13,7 @@ import org.tsd.rest.v1.tsdtv.Season;
 import org.tsd.rest.v1.tsdtv.Series;
 import org.tsd.tsdbot.discord.DiscordChannel;
 import org.tsd.tsdbot.discord.DiscordMessage;
+import org.tsd.tsdbot.discord.DiscordUser;
 import org.tsd.tsdbot.listener.MessageHandler;
 import org.tsd.tsdbot.tsdtv.TSDTV;
 import org.tsd.tsdbot.tsdtv.TSDTVScheduler;
@@ -33,7 +34,7 @@ public class TSDTVHandler extends MessageHandler<DiscordChannel> {
     private static final Logger log = LoggerFactory.getLogger(TSDTVHandler.class);
 
     private final AuthUtil authUtil;
-    private final TSDTV queue;
+    private final TSDTV tsdtv;
     private final TSDTVScheduler scheduler;
     private final TSDTVLibrary library;
 
@@ -45,7 +46,7 @@ public class TSDTVHandler extends MessageHandler<DiscordChannel> {
                         TSDTVScheduler tsdtvScheduler) {
         super(api);
         this.authUtil = authUtil;
-        this.queue = tsdtv;
+        this.tsdtv = tsdtv;
         this.library = tsdtvLibrary;
         this.scheduler = tsdtvScheduler;
     }
@@ -61,7 +62,7 @@ public class TSDTVHandler extends MessageHandler<DiscordChannel> {
 
         String[] parts = message.getContent().split("\\s+");
 
-        switch (parts[1]) {
+        switch (parts[1].toLowerCase()) {
             case "reload": {
                 if (authUtil.userIsAdmin(message.getAuthor())) {
                     scheduler.loadSchedule();
@@ -75,9 +76,33 @@ public class TSDTVHandler extends MessageHandler<DiscordChannel> {
                 handlePlay(channel, parts);
                 break;
             }
+            case "kill": {
+                handleKill(channel, message.getAuthor(),false);
+                break;
+            }
+            case "nuke": {
+                handleKill(channel, message.getAuthor(), true);
+                break;
+            }
             default: {
                 channel.sendMessage("Unknown command");
             }
+        }
+    }
+
+    private void handleKill(DiscordChannel channel, DiscordUser author, boolean nuke) {
+        if (authUtil.userIsAdmin(author)) {
+            if (nuke) {
+                log.warn("Nuke instruction received");
+                tsdtv.stopAll();
+                channel.sendMessage("The stream and queue have been nuked (with no survivors)");
+            } else {
+                log.warn("Kill instruction received");
+                tsdtv.stopNowPlaying();
+                channel.sendMessage("The current stream has been killed");
+            }
+        } else {
+            channel.sendMessage("You don't have permission to do that");
         }
     }
 
@@ -106,7 +131,7 @@ public class TSDTVHandler extends MessageHandler<DiscordChannel> {
             } else {
                 Movie movie = matches.get(0);
                 try {
-                    if (queue.add(movie.getAgentId(), movie.getId())) {
+                    if (tsdtv.playOrEnqueue(movie.getAgentId(), movie.getId())) {
                         channel.sendMessage("Now playing: " + movie.getName());
                     } else {
                         channel.sendMessage("Your movie \""+movie.getName()+"\" has been enqueued");
@@ -193,7 +218,7 @@ public class TSDTVHandler extends MessageHandler<DiscordChannel> {
                 // play an episode if we found one
                 if (episode != null) {
                     try {
-                        if (queue.add(episode.getAgentId(), episode.getId())) {
+                        if (tsdtv.playOrEnqueue(episode.getAgentId(), episode.getId())) {
                             channel.sendMessage(String.format("Now playing: %s / %s",
                                     seriesSeasonString, episode.getName()));
                         } else {

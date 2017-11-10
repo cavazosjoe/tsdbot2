@@ -112,7 +112,7 @@ public class TSDTVResource {
     public Response play(PlayMediaRequest playMediaRequest) {
         log.info("Received playMedia instruction: data={}", playMediaRequest);
         try {
-            tsdtv.add(playMediaRequest.getAgentId(), Integer.parseInt(playMediaRequest.getMediaId()));
+            tsdtv.playOrEnqueue(playMediaRequest.getAgentId(), Integer.parseInt(playMediaRequest.getMediaId()));
             return Response.accepted("Accepted").build();
         } catch (TSDTVException e) {
             return Response.serverError().entity(e.getMessage()).build();

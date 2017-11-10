@@ -1,11 +1,13 @@
 package org.tsd.tsdbot.app.module;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Names;
 import org.tsd.Constants;
 import org.tsd.tsdbot.app.BotUrl;
 import org.tsd.tsdbot.app.Stage;
 import org.tsd.tsdbot.app.config.TSDBotConfiguration;
+import org.tsd.tsdbot.tsdtv.job.JobFactory;
 
 import java.net.URL;
 
@@ -48,5 +50,7 @@ public class TSDBotModule extends AbstractModule {
         bind(String.class)
                 .annotatedWith(Names.named(Constants.Annotations.MASHAPE_API_KEY))
                 .toInstance(configuration.getMashapeApiKey());
+
+        install(new FactoryModuleBuilder().build(JobFactory.class));
     }
 }

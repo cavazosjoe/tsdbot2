@@ -16,6 +16,24 @@ import java.util.UUID;
 public abstract class Job {
 
     protected String id = UUID.randomUUID().toString();
+    protected String agentId;
+    protected long timeoutMillis;
+
+    public String getAgentId() {
+        return agentId;
+    }
+
+    public void setAgentId(String agentId) {
+        this.agentId = agentId;
+    }
+
+    public long getTimeoutMillis() {
+        return timeoutMillis;
+    }
+
+    public void setTimeoutMillis(long timeoutMillis) {
+        this.timeoutMillis = timeoutMillis;
+    }
 
     public String getId() {
         return id;

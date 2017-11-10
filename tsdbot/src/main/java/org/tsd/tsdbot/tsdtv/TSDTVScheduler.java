@@ -29,6 +29,8 @@ public class TSDTVScheduler {
 
     private static final Logger log = LoggerFactory.getLogger(TSDTVScheduler.class);
 
+    private static final String SCHEDULE_FILE = "tsdtvSchedule.json";
+
     private final TSDTV tsdtv;
     private final Scheduler scheduler;
     private final AmazonS3 s3Client;
@@ -48,7 +50,11 @@ public class TSDTVScheduler {
         this.scheduler = scheduler;
 
         try {
+            log.warn("Starting TSDTVScheduler...");
+            scheduler.start();
+            log.warn("Started quartz scheduler");
             loadSchedule();
+            log.warn("Successfully started TSDTVScheduler");
         } catch (Exception e) {
             throw new RuntimeException("Error initializing TSDTV scheduler", e);
         }
@@ -57,18 +63,24 @@ public class TSDTVScheduler {
     public void loadSchedule() throws SchedulerException, IOException {
         log.warn("Loading TSDTV schedule...");
         scheduler.pauseAll();
+        log.warn("Paused quartz scheduler");
         Set<JobKey> keys = scheduler.getJobKeys(GroupMatcher.groupEquals(Constants.Scheduler.TSDTV_GROUP_ID));
         log.warn("Found job keys: {}", keys.stream().map(Key::getName).collect(Collectors.joining(",")));
         scheduler.deleteJobs(new LinkedList<>(keys));
 
-        S3Object scheduleFile = s3Client.getObject(tsdtvBucket, "tsdtvSchedule.json");
+        log.info("Fetching schedule file from S3: {}/{}", tsdtvBucket, SCHEDULE_FILE);
+        S3Object scheduleFile = s3Client.getObject(tsdtvBucket, SCHEDULE_FILE);
+        if (scheduleFile == null) {
+            throw new IOException("Could not find TSDTV schedule file in S3: " + tsdtvBucket + "/" + SCHEDULE_FILE);
+        }
+        
         Schedule schedule = objectMapper.readValue(scheduleFile.getObjectContent(), Schedule.class);
         log.info("Read schedule from S3: {}", schedule);
 
         for (ScheduledBlock block : schedule.getScheduledBlocks()) {
             log.info("Evaluating scheduled block: {}", block);
             JobDataMap jobDataMap = new JobDataMap();
-            jobDataMap.put("blockInfo", block);
+            jobDataMap.put(Constants.Scheduler.TSDTV_BLOCK_DATA_KEY, block);
 
             JobDetail job = newJob(ScheduledBlockJob.class)
                     .withIdentity(block.getId(), Constants.Scheduler.TSDTV_GROUP_ID)
@@ -82,12 +94,15 @@ public class TSDTVScheduler {
             scheduler.scheduleJob(job, cronTrigger);
             log.warn("Successfully scheduled block {}/{}", block.getId(), block.getName());
         }
+        scheduler.resumeAll();
+        log.warn("Resumed quartz scheduler");
     }
 
     class ScheduledBlockJob implements Job {
         @Override
         public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
-            ScheduledBlock block = (ScheduledBlock) jobExecutionContext.getJobDetail().getJobDataMap().get("blockInfo");
+            ScheduledBlock block = (ScheduledBlock) jobExecutionContext.getJobDetail().getJobDataMap()
+                    .get(Constants.Scheduler.TSDTV_BLOCK_DATA_KEY);
             log.warn("Executing scheduled block job: {}", block);
             tsdtv.startScheduledBlock(block);
         }

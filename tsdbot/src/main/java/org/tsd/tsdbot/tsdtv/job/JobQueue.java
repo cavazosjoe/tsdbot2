@@ -1,12 +1,12 @@
 package org.tsd.tsdbot.tsdtv.job;
 
+import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tsd.rest.v1.tsdtv.job.Job;
-import org.tsd.rest.v1.tsdtv.job.JobResult;
+import org.tsd.rest.v1.tsdtv.job.*;
 
 import java.time.ZoneOffset;
 import java.util.Comparator;
@@ -20,12 +20,29 @@ public class JobQueue {
 
     private static final Logger log = LoggerFactory.getLogger(JobQueue.class);
 
+    private final JobFactory jobFactory;
     private final Map<String, SubmittedJob> submittedJobs = new ConcurrentHashMap<>();
 
-    public <JOB extends Job, RESULT extends JobResult> RESULT submitJob(String agentId, JOB job, long timeout)
+    @Inject
+    public JobQueue(JobFactory jobFactory) {
+        this.jobFactory = jobFactory;
+    }
+
+    public TSDTVPlayJobResult submitTsdtvPlayJob(TSDTVPlayJob job)
             throws JobTimeoutException {
-        SubmittedJob<JOB, RESULT> submittedJob = new SubmittedJob<>(agentId, job, timeout);
-        submittedJobs.put(job.getId(), submittedJob);
+        SubmittedJob<TSDTVPlayJob, TSDTVPlayJobResult> submittedJob = jobFactory.createSubmittedTsdtvPlayJob(job);
+        return submitAndWait(submittedJob);
+    }
+
+    public TSDTVStopJobResult submitTsdtvStopJob(TSDTVStopJob job)
+            throws JobTimeoutException {
+        SubmittedJob<TSDTVStopJob, TSDTVStopJobResult> submittedJob = jobFactory.createSubmittedTsdtvStopJob(job);
+        return submitAndWait(submittedJob);
+    }
+
+    private <JOB extends Job, RESULT extends JobResult> RESULT submitAndWait(SubmittedJob<JOB, RESULT> submittedJob)
+            throws JobTimeoutException {
+        submittedJobs.put(submittedJob.getJob().getId(), submittedJob);
         return submittedJob.waitForResult();
     }
 

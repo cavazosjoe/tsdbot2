@@ -164,6 +164,7 @@ public class Constants {
 
     public static class Scheduler {
         public static final String TSDTV_GROUP_ID = "tsdtv";
+        public static final String TSDTV_BLOCK_DATA_KEY = "blockInfo";
     }
 
     public static class TSDTV {

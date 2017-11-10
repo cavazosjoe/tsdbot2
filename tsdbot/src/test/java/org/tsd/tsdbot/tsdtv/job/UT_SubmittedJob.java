@@ -8,6 +8,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.tsd.rest.v1.tsdtv.job.Job;
 import org.tsd.rest.v1.tsdtv.job.JobResult;
 
+import java.time.Clock;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -33,8 +34,9 @@ public class UT_SubmittedJob {
     @Test
     public void testLockUnlock() throws JobTimeoutException, InterruptedException {
         FakeJob job = new FakeJob();
-        SubmittedJob<FakeJob, FakeJobResult> submittedJob
-                = new SubmittedJob<>("agentId", job, TimeUnit.DAYS.toMillis(1));
+        job.setAgentId("agentId");
+        job.setTimeoutMillis(TimeUnit.DAYS.toMillis(1));
+        SubmittedJob<FakeJob, FakeJobResult> submittedJob = new SubmittedJob<>(Clock.systemUTC(), job);
         executorService.submit(submittedJob::waitForResult);
         Thread.sleep(TimeUnit.SECONDS.toMillis(3));
         submittedJob.updateResult(new FakeJobResult());

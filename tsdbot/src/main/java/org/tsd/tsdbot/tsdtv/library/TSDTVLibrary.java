@@ -29,7 +29,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -54,7 +53,6 @@ public class TSDTVLibrary {
     @Inject
     public TSDTVLibrary(AgentRegistry agentRegistry,
                         AmazonS3 s3Client,
-                        ExecutorService executorService,
                         FFprobe fFprobe,
                         @Named(Constants.Annotations.S3_TSDTV_IMAGES_BUCKET) String tsdtvImagesBucket,
                         @Named(Constants.Annotations.S3_TSDTV_COMMERCIALS_BUCKET) String tsdtvCommercialsBucket,
@@ -116,7 +114,7 @@ public class TSDTVLibrary {
                 .collect(Collectors.toList());
         Collections.shuffle(allCommercials);
 
-        executorService.submit(new CommercialLoaderThread());
+        new Thread(new CommercialLoaderThread()).start();
     }
 
     public Commercial getCommercial() {
@@ -203,19 +201,24 @@ public class TSDTVLibrary {
 
         @Override
         public void run() {
+            log.info("Starting CommercialLoaderThread...");
             while (!shutdown) {
-
                 if (loadedCommercials.size() < 10) {
+                    log.debug("Loaded commercials: {}", loadedCommercials.size());
                     String commercialToLoad = allCommercials.remove(0);
                     try {
+                        log.debug("Loading commercial: {}", commercialToLoad);
                         S3Object object = s3Client.getObject(tsdtvCommercialsBucket, commercialToLoad);
+                        log.debug("Retrieved commercial file from S3: {}/{}", object.getBucketName(), object.getKey());
                         File tempFile = Files.createTempFile(RandomStringUtils.randomAlphabetic(10), ".tmp").toFile();
                         FileUtils.copyInputStreamToFile(object.getObjectContent(), tempFile);
                         Commercial commercial = new Commercial(object.getKey(), FfmpegUtil.getMediaInfo(fFprobe, tempFile));
+                        log.debug("Created Commercial: {}", commercial);
                         synchronized (loadedCommercials) {
                             loadedCommercials.put(commercialToLoad, commercial);
                         }
                         allCommercials.add(commercialToLoad);
+                        log.debug("allCommercials: {}", allCommercials);
                     } catch (Exception e) {
                         log.error("Error loading commercial " + commercialToLoad, e);
                     }

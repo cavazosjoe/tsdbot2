@@ -20,6 +20,7 @@ import org.tsd.rest.v1.tsdtv.job.TSDTVPlayJobResult;
 import org.tsd.rest.v1.tsdtv.job.TSDTVStopJob;
 import org.tsd.rest.v1.tsdtv.queue.EpisodicInfo;
 import org.tsd.rest.v1.tsdtv.queue.QueuedItem;
+import org.tsd.rest.v1.tsdtv.queue.QueuedItemType;
 import org.tsd.rest.v1.tsdtv.schedule.ScheduledBlock;
 import org.tsd.rest.v1.tsdtv.schedule.ScheduledBlockSummary;
 import org.tsd.rest.v1.tsdtv.schedule.ScheduledItem;
@@ -33,6 +34,8 @@ import org.tsd.tsdbot.tsdtv.library.TSDTVLibrary;
 import org.tsd.tsdbot.tsdtv.library.TSDTVListing;
 import org.tsd.tsdbot.util.TSDTVUtils;
 import org.tsd.tsdtv.TSDTVPlayer;
+import org.tsd.util.RetryInstructionFailedException;
+import org.tsd.util.RetryUtil;
 
 import java.net.URL;
 import java.time.Clock;
@@ -44,6 +47,12 @@ import java.util.stream.Collectors;
 public class TSDTV {
 
     private static final Logger log = LoggerFactory.getLogger(TSDTV.class);
+
+    private static final long STOP_NOW_PLAYING_WAIT_PERIOD_MILLIS
+            = TimeUnit.SECONDS.toMillis(10);
+
+    private static final long PLAY_MEDIA_WAIT_PERIOD_MILLIS
+            = TimeUnit.SECONDS.toMillis(20);
 
     private QueuedItem nowPlaying;
     private final List<QueuedItem> queue = new LinkedList<>();
@@ -141,14 +150,14 @@ public class TSDTV {
         return blocks;
     }
 
-    public synchronized boolean add(String agentId, int mediaId) throws TSDTVException {
+    public synchronized boolean playOrEnqueue(String agentId, int mediaId) throws TSDTVException {
         log.info("Adding media to queue, agentId={}, mediaId={}", agentId, mediaId);
         Media media = library.findMediaById(agentId, mediaId);
         log.info("Found media: {}", media);
-        return add(new QueuedItem(media));
+        return playOrEnqueue(new QueuedItem(media));
     }
 
-    private synchronized boolean add(QueuedItem addingItem) throws TSDTVException {
+    private synchronized boolean playOrEnqueue(QueuedItem addingItem) throws TSDTVException {
         if (nowPlaying == null && CollectionUtils.isEmpty(queue)) {
             // play immediately
             nowPlaying(addingItem);
@@ -178,17 +187,33 @@ public class TSDTV {
         return queue.stream().map(QueuedItem::getMedia).anyMatch(m -> m.equals(media));
     }
 
+    public synchronized void stopAll() {
+        log.warn("Stopping all media");
+        queue.clear();
+        log.warn("Queue cleared, stopping media...");
+        stopNowPlaying();
+        log.warn("Nuke complete");
+    }
+
     /*
     Tell the agent to stop playing
      */
     public synchronized void stopNowPlaying() {
         if (nowPlaying != null) {
             log.info("Stopping nowPlaying: {}", nowPlaying);
-            TSDTVStopJob stopJob = new TSDTVStopJob();
-            try {
-                jobQueue.submitJob(nowPlaying.getMedia().getAgentId(), stopJob, TimeUnit.SECONDS.toMillis(10));
-            } catch (Exception e) {
-                log.error("Error stopping media " + nowPlaying, e);
+            if (nowPlaying.getType().equals(QueuedItemType.commercial)) {
+                player.stop();
+            } else {
+                TSDTVStopJob stopJob = new TSDTVStopJob();
+                stopJob.setAgentId(nowPlaying.getMedia().getAgentId());
+                stopJob.setTimeoutMillis(STOP_NOW_PLAYING_WAIT_PERIOD_MILLIS);
+                try {
+                    RetryUtil.executeWithRetry("TSDTVStop", 5, () -> {
+                        jobQueue.submitTsdtvStopJob(stopJob);
+                    });
+                } catch (RetryInstructionFailedException e) {
+                    log.error("Failed to stop media " + nowPlaying);
+                }
             }
             this.nowPlaying = null;
         }
@@ -238,12 +263,13 @@ public class TSDTV {
 
                 // job request to send to agent
                 TSDTVPlayJob playJob = new TSDTVPlayJob();
+                playJob.setAgentId(media.getAgentId());
+                playJob.setTimeoutMillis(PLAY_MEDIA_WAIT_PERIOD_MILLIS);
                 playJob.setMediaId(media.getId());
                 playJob.setTargetUrl(tsdtvStreamUrl);
                 try {
                     log.info("Sending play request to agent: {}", media.getAgentId());
-                    TSDTVPlayJobResult result
-                            = jobQueue.submitJob(media.getAgentId(), playJob, TimeUnit.SECONDS.toMillis(20));
+                    TSDTVPlayJobResult result = jobQueue.submitTsdtvPlayJob(playJob);
 
                     if (!result.isSuccess()) {
                         throw new TSDTVException("Error playing media");
@@ -387,7 +413,7 @@ public class TSDTV {
             for (QueuedItem queuedItem : toPlay) {
                 try {
                     log.info("Adding scheduled item to queue: {}", queuedItem);
-                    add(queuedItem);
+                    playOrEnqueue(queuedItem);
                 } catch (Exception e) {
                     log.error("Error adding scheduled item to queue: " + queuedItem, e);
                 }

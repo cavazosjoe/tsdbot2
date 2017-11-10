@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.tsd.client.TSDBotClient;
 import org.tsd.rest.v1.tsdtv.Media;
 import org.tsd.rest.v1.tsdtv.job.*;
+import org.tsd.util.RetryInstructionFailedException;
 import org.tsd.util.RetryUtil;
 
 import java.time.Instant;
@@ -77,9 +78,13 @@ public class JobPollingThread implements Runnable {
                 log.info("Found media: {}", media);
                 player.play(media, targetUrl, state -> {
                     boolean error = !FFmpegJob.State.FINISHED.equals(state);
-                    RetryUtil.executeWithRetry(5,
-                            TimeUnit.SECONDS.toMillis(1),
-                            () -> client.sendMediaStoppedNotification(mediaId, error));
+                    try {
+                        RetryUtil.executeWithRetry("SendMediaStoppedNotification",
+                                5,
+                                () -> client.sendMediaStoppedNotification(mediaId, error));
+                    } catch (RetryInstructionFailedException e) {
+                        log.error("Failed to report to TSDTV that the media has stopped");
+                    }
                 });
                 result.setSuccess(true);
                 result.setTimeStarted(Instant.now().toEpochMilli());

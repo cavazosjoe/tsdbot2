@@ -1,11 +1,14 @@
 package org.tsd.tsdbot.tsdtv.job;
 
+import com.google.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tsd.rest.v1.tsdtv.job.Job;
 import org.tsd.rest.v1.tsdtv.job.JobResult;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
@@ -19,7 +22,7 @@ public class SubmittedJob<JOB extends Job, RESULT extends JobResult> {
     private final String agentId;
     private final LocalDateTime created;
     private final JOB job;
-    private final long timeout;
+    private final long timeoutMillis;
 
     private final Lock lock = new ReentrantLock();
     private final Condition pendingResult = lock.newCondition();
@@ -27,20 +30,22 @@ public class SubmittedJob<JOB extends Job, RESULT extends JobResult> {
     private LocalDateTime taken = null;
     private RESULT result = null;
 
-    public SubmittedJob(String agentId, JOB job, long timeout) {
-        this.agentId = agentId;
+    @Inject
+    public SubmittedJob(Clock clock,
+                        @Assisted JOB job) {
         this.job = job;
-        this.timeout = timeout;
-        this.created = LocalDateTime.now();
+        this.agentId = job.getAgentId();
+        this.timeoutMillis = job.getTimeoutMillis();
+        this.created = LocalDateTime.now(clock);
     }
 
     public RESULT waitForResult() throws JobTimeoutException {
         lock.lock();
         try {
-            long expirationTime = System.currentTimeMillis() + timeout;
+            long expirationTime = System.currentTimeMillis() + timeoutMillis;
             while (result == null && System.currentTimeMillis() < expirationTime) {
                 try {
-                    pendingResult.await(timeout, TimeUnit.MILLISECONDS);
+                    pendingResult.await(timeoutMillis, TimeUnit.MILLISECONDS);
                 } catch (InterruptedException e) {
                     log.info("Interrupted, jobId={}", job.getId());
                 }
@@ -92,7 +97,7 @@ public class SubmittedJob<JOB extends Job, RESULT extends JobResult> {
                 .append("agentId", agentId)
                 .append("created", created)
                 .append("job", job.getClass())
-                .append("timeout", timeout)
+                .append("timeoutMillis", timeoutMillis)
                 .append("taken", taken)
                 .append("result", result)
                 .toString();
