@@ -211,6 +211,7 @@ public class TSDTVLibrary {
                         S3Object object = s3Client.getObject(tsdtvCommercialsBucket, commercialToLoad);
                         log.debug("Retrieved commercial file from S3: {}/{}", object.getBucketName(), object.getKey());
                         File tempFile = Files.createTempFile(RandomStringUtils.randomAlphabetic(10), ".tmp").toFile();
+                        tempFile.deleteOnExit();
                         FileUtils.copyInputStreamToFile(object.getObjectContent(), tempFile);
                         Commercial commercial = new Commercial(object.getKey(), FfmpegUtil.getMediaInfo(fFprobe, tempFile));
                         log.debug("Created Commercial: {}", commercial);
