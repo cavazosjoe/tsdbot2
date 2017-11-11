@@ -24,6 +24,7 @@ CREATE TABLE TSDTVEpisodicItem (
   id VARCHAR(36) NOT NULL PRIMARY KEY,
   seriesName VARCHAR(255) NOT NULL,
   seasonName VARCHAR(255),
+  currentEpisode INT UNSIGNED NOT NULL DEFAULT 1,
   CONSTRAINT UNIQUE (seriesName, seasonName),
   INDEX (seriesName),
   INDEX (seasonName)
