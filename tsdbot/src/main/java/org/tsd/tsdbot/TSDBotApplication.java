@@ -13,6 +13,7 @@ import io.dropwizard.hibernate.HibernateBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import io.dropwizard.views.ViewBundle;
+import org.quartz.Scheduler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tsd.app.module.UtilityModule;
@@ -32,9 +33,11 @@ import org.tsd.tsdbot.odb.OdbItem;
 import org.tsd.tsdbot.printout.PrintoutLibrary;
 import org.tsd.tsdbot.resources.*;
 import org.tsd.tsdbot.tsdtv.AgentRegistry;
+import org.tsd.tsdbot.tsdtv.TSDTV;
 import org.tsd.tsdbot.tsdtv.TSDTVAgent;
 import org.tsd.tsdbot.tsdtv.TSDTVEpisodicItem;
 import org.tsd.tsdbot.tsdtv.library.TSDTVLibrary;
+import org.tsd.tsdbot.tsdtv.quartz.TSDTVJobFactory;
 import twitter4j.Twitter;
 import twitter4j.TwitterFactory;
 
@@ -106,6 +109,8 @@ public class TSDBotApplication extends Application<TSDBotConfiguration> {
             }
         });
 
+        configureQuartz(injector);
+
         HistoryCache historyCache = injector.getInstance(HistoryCache.class);
 
         CreateMessageListener messageListener = injector.getInstance(CreateMessageListener.class);
@@ -145,5 +150,17 @@ public class TSDBotApplication extends Application<TSDBotConfiguration> {
         environment.jersey().register(injector.getInstance(PrintoutResource.class));
         environment.jersey().register(injector.getInstance(TSDTVResource.class));
         environment.jersey().register(injector.getInstance(JobResource.class));
+    }
+
+    private static void configureQuartz(Injector injector) {
+        try {
+            Scheduler scheduler = injector.getInstance(Scheduler.class);
+            TSDTV tsdtv = injector.getInstance(TSDTV.class);
+            scheduler.setJobFactory(new TSDTVJobFactory(tsdtv));
+        } catch (Exception e) {
+            System.err.println("Failed to configure TSDTV quartz scheduler");
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
     }
 }

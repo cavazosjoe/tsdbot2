@@ -65,13 +65,7 @@ public class Hustle {
     }
 
     public void process(DiscordMessage<?> message) {
-        boolean calculate = (nextApiCallAttempt == null);
-
-        if (LocalDateTime.now(clock).isAfter(nextApiCallAttempt)) {
-            calculate = true;
-        }
-
-        if (calculate) {
+        if (shouldCalculate()) {
             executorService.submit(() -> {
                 log.debug("Sending latest message for sentiment analysis: {}", message);
                 String responseString = null;
@@ -111,6 +105,10 @@ public class Hustle {
                 }
             });
         }
+    }
+
+    private boolean shouldCalculate() {
+        return nextApiCallAttempt == null || LocalDateTime.now(clock).isAfter(nextApiCallAttempt);
     }
 
     private static HustleDataPoint getDataPointFromKey(String originalMessage, JSONObject json, String key) {

@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.tsd.Constants;
 import org.tsd.rest.v1.tsdtv.schedule.Schedule;
 import org.tsd.rest.v1.tsdtv.schedule.ScheduledBlock;
+import org.tsd.tsdbot.tsdtv.quartz.ScheduledBlockJob;
 
 import java.io.IOException;
 import java.util.LinkedList;
@@ -65,7 +66,8 @@ public class TSDTVScheduler {
         scheduler.pauseAll();
         log.warn("Paused quartz scheduler");
         Set<JobKey> keys = scheduler.getJobKeys(GroupMatcher.groupEquals(Constants.Scheduler.TSDTV_GROUP_ID));
-        log.warn("Found job keys: {}", keys.stream().map(Key::getName).collect(Collectors.joining(",")));
+        log.warn("Deleting job keys for group: {} -> {}",
+                Constants.Scheduler.TSDTV_GROUP_ID, keys.stream().map(Key::getName).collect(Collectors.joining(",")));
         scheduler.deleteJobs(new LinkedList<>(keys));
 
         log.info("Fetching schedule file from S3: {}/{}", tsdtvBucket, SCHEDULE_FILE);
@@ -88,7 +90,7 @@ public class TSDTVScheduler {
                     .build();
 
             Trigger cronTrigger = newTrigger()
-                    .withSchedule(cronSchedule(block.getCronString()))
+                    .withSchedule(cronSchedule(block.getCronString()).inTimeZone(Constants.Scheduler.TSDTV_TIME_ZONE))
                     .build();
 
             scheduler.scheduleJob(job, cronTrigger);
@@ -98,13 +100,4 @@ public class TSDTVScheduler {
         log.warn("Resumed quartz scheduler");
     }
 
-    class ScheduledBlockJob implements Job {
-        @Override
-        public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
-            ScheduledBlock block = (ScheduledBlock) jobExecutionContext.getJobDetail().getJobDataMap()
-                    .get(Constants.Scheduler.TSDTV_BLOCK_DATA_KEY);
-            log.warn("Executing scheduled block job: {}", block);
-            tsdtv.startScheduledBlock(block);
-        }
-    }
 }

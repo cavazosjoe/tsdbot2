@@ -3,6 +3,7 @@ package org.tsd;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.List;
+import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
@@ -163,6 +164,7 @@ public class Constants {
     }
 
     public static class Scheduler {
+        public static final TimeZone TSDTV_TIME_ZONE = TimeZone.getTimeZone("America/New_York");
         public static final String TSDTV_GROUP_ID = "tsdtv";
         public static final String TSDTV_BLOCK_DATA_KEY = "blockInfo";
     }

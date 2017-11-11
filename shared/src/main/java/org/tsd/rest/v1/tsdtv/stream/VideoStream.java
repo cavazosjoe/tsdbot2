@@ -1,5 +1,7 @@
 package org.tsd.rest.v1.tsdtv.stream;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
 public class VideoStream extends Stream {
     private int width;
     private int height;
@@ -72,5 +74,22 @@ public class VideoStream extends Stream {
 
     public void setAvgFrameRate(double avgFrameRate) {
         this.avgFrameRate = avgFrameRate;
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("width", width)
+                .append("height", height)
+                .append("sampleAspectRatio", sampleAspectRatio)
+                .append("displayAspectRatio", displayAspectRatio)
+                .append("pixFmt", pixFmt)
+                .append("isAvc", isAvc)
+                .append("rFrameRate", rFrameRate)
+                .append("avgFrameRate", avgFrameRate)
+                .append("index", index)
+                .append("codecName", codecName)
+                .append("tags", tags)
+                .toString();
     }
 }

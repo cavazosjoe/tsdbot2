@@ -1,8 +1,39 @@
 {
   "scheduledBlocks": [
     {
+      "id": "satam",
+      "cronString": "0 30 11 ? * SAT",
+      "name": "Saturday Morning Bullshit",
+      "scheduledItems": [
+        {
+          "series": "Sonic_SatAM",
+          "commercialBreakMinutes": 2
+        },
+        {
+          "series": "Recess",
+          "commercialBreakMinutes": 1
+        },
+        {
+          "series": "Recess",
+          "commercialBreakMinutes": 1
+        },
+        {
+          "series": "Saved_by_the_Bell",
+          "commercialBreakMinutes": 2
+        },
+        {
+          "series": "Swat_Kats",
+          "commercialBreakMinutes": 2
+        },
+        {
+          "series": "Sailor_Moon",
+          "commercialBreakMinutes": 0
+        }
+      ]
+    },
+    {
     "id": "weeaboo",
-    "cronString": "0 0 18 ? * MON-THU",
+    "cronString": "0 0 21 ? * MON-THU",
     "name": "Weeaboo Weeknights",
     "scheduledItems": [
       {

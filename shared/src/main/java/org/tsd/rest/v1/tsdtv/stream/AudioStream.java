@@ -1,5 +1,7 @@
 package org.tsd.rest.v1.tsdtv.stream;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
 public class AudioStream extends Stream {
     private String channelLayout;
     private String language;
@@ -27,5 +29,17 @@ public class AudioStream extends Stream {
 
     public void setSampleRate(long sampleRate) {
         this.sampleRate = sampleRate;
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("channelLayout", channelLayout)
+                .append("language", language)
+                .append("sampleRate", sampleRate)
+                .append("index", index)
+                .append("codecName", codecName)
+                .append("tags", tags)
+                .toString();
     }
 }
