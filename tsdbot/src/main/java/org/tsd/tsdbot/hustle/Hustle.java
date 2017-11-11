@@ -65,14 +65,10 @@ public class Hustle {
     }
 
     public void process(DiscordMessage<?> message) {
-        boolean calculate = false;
+        boolean calculate = (nextApiCallAttempt == null);
 
-        if (nextApiCallAttempt == null) {
+        if (LocalDateTime.now(clock).isAfter(nextApiCallAttempt)) {
             calculate = true;
-        } else {
-            if (LocalDateTime.now(clock).isAfter(nextApiCallAttempt)) {
-                calculate = true;
-            }
         }
 
         if (calculate) {
@@ -110,7 +106,7 @@ public class Hustle {
                 } catch (Exception e) {
                     log.error("Error retrieving text sentiment, response=\"\n" + responseString + "\"", e);
                     owner.sendMessage("Error calculating hustle quotient: `" + responseString + "`");
-                    throttleSeconds = Math.max(MAX_THROTTLE_PERIOD_SECONDS, throttleSeconds*2);
+                    throttleSeconds = Math.min(MAX_THROTTLE_PERIOD_SECONDS, throttleSeconds*2);
                     nextApiCallAttempt = LocalDateTime.now(clock).plusSeconds(throttleSeconds);
                 }
             });

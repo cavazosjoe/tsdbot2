@@ -148,15 +148,17 @@ public class AgentRegistry {
         public void run() {
             while (!shutdown) {
                 LocalDateTime cutoff = LocalDateTime
-                        .now()
-                        .minus(2*Constants.TSDTV.AGENT_HEARTBEAT_PERIOD_MILLIS, ChronoUnit.MILLIS);
-                List<String> expiredAgentIds = onlineAgents
-                        .entrySet()
+                        .now(clock)
+                        .minus(3*Constants.TSDTV.AGENT_HEARTBEAT_PERIOD_MILLIS, ChronoUnit.MILLIS);
+                log.debug("Checking for agents with last heartbeat before {}", cutoff);
+                List<OnlineAgent> expiredAgents = onlineAgents.entrySet()
                         .stream()
                         .filter(entry -> entry.getValue().getLastHeartbeat().isBefore(cutoff))
-                        .map(Map.Entry::getKey)
+                        .map(Map.Entry::getValue)
                         .collect(Collectors.toList());
-                for (String agentId : expiredAgentIds) {
+                for (OnlineAgent agent : expiredAgents) {
+                    String agentId = agent.getAgent().getAgentId();
+                    log.warn("Agent offline: {} (last heartbeat = {})", agentId, agent.getLastHeartbeat());
                     onlineAgents.remove(agentId);
                     jobQueue.handleOfflineAgent(agentId);
                 }
