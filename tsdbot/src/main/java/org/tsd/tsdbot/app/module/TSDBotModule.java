@@ -51,6 +51,14 @@ public class TSDBotModule extends AbstractModule {
                 .annotatedWith(Names.named(Constants.Annotations.MASHAPE_API_KEY))
                 .toInstance(configuration.getMashapeApiKey());
 
+        bind(String.class)
+                .annotatedWith(Names.named(Constants.Annotations.ENCRYPTION_KEY))
+                .toInstance(configuration.getEncryptionKey());
+
+        bind(String.class)
+                .annotatedWith(Names.named(Constants.Annotations.SERVICE_AUTH_PASSWORD))
+                .toInstance(configuration.getServiceAuthPassword());
+
         install(new FactoryModuleBuilder().build(JobFactory.class));
     }
 }

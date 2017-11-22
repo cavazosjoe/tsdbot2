@@ -5,6 +5,7 @@ import io.dropwizard.hibernate.HibernateBundle;
 import io.dropwizard.hibernate.UnitOfWorkAwareProxyFactory;
 import org.hibernate.SessionFactory;
 import org.tsd.tsdbot.app.config.TSDBotConfiguration;
+import org.tsd.tsdbot.auth.UserDao;
 import org.tsd.tsdbot.odb.OdbItemDao;
 import org.tsd.tsdbot.tsdtv.TSDTVAgentDao;
 import org.tsd.tsdbot.tsdtv.TSDTVEpisodicItemDao;
@@ -20,6 +21,11 @@ public class HibernateModule extends AbstractModule {
     @Override
     protected void configure() {
         UnitOfWorkAwareProxyFactory proxyFactory = new UnitOfWorkAwareProxyFactory(hibernate);
+
+        UserDao userDao = proxyFactory
+                .create(UserDao.class, SessionFactory.class, hibernate.getSessionFactory());
+        bind(UserDao.class)
+                .toInstance(userDao);
 
         OdbItemDao odbItemDao = proxyFactory
                 .create(OdbItemDao.class, SessionFactory.class, hibernate.getSessionFactory());

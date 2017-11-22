@@ -3,7 +3,6 @@ package org.tsd.tsdbot.view;
 import com.googlecode.wickedcharts.highcharts.jackson.JsonRenderer;
 import com.googlecode.wickedcharts.highcharts.options.*;
 import com.googlecode.wickedcharts.highcharts.options.series.SimpleSeries;
-import io.dropwizard.views.View;
 import org.tsd.Constants;
 import org.tsd.tsdbot.hustle.HustleDataPoint;
 
@@ -14,12 +13,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class HustleView extends View {
+public class HustleView extends TSDHQView {
 
     private final List<HustleDataPoint> dataPoints;
 
     public HustleView(List<HustleDataPoint> dataPoints) {
-        super(Constants.View.HUSTLE_VIEW, Constants.UTF_8);
+        super(Constants.View.HUSTLE_VIEW);
         this.dataPoints = dataPoints;
     }
 

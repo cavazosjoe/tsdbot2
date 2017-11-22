@@ -1,19 +1,20 @@
 package org.tsd.tsdbot.resources;
 
-import com.google.inject.name.Named;
+import io.dropwizard.auth.Auth;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tsd.Constants;
 import org.tsd.rest.v1.tsdtv.Heartbeat;
 import org.tsd.rest.v1.tsdtv.HeartbeatResponse;
 import org.tsd.rest.v1.tsdtv.PlayMediaRequest;
 import org.tsd.rest.v1.tsdtv.StoppedPlayingNotification;
+import org.tsd.tsdbot.auth.User;
 import org.tsd.tsdbot.tsdtv.*;
 import org.tsd.tsdbot.tsdtv.library.TSDTVLibrary;
 import org.tsd.tsdbot.util.FileUtils;
 import org.tsd.tsdbot.view.TSDTVView;
 
+import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.*;
@@ -22,6 +23,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import java.io.IOException;
+import java.util.Optional;
 
 @Path("/tsdtv")
 public class TSDTVResource {
@@ -31,28 +33,25 @@ public class TSDTVResource {
     private final AgentRegistry agentRegistry;
     private final TSDTVLibrary tsdtvLibrary;
     private final TSDTV tsdtv;
-    private final String ownerKey;
     private final FileUtils fileUtils;
 
     @Inject
     public TSDTVResource(AgentRegistry agentRegistry,
                          TSDTVLibrary tsdtvLibrary,
                          TSDTV tsdtv,
-                         FileUtils fileUtils,
-                         @Named(Constants.Annotations.OWNER_KEY) String ownerKey) {
+                         FileUtils fileUtils) {
         this.agentRegistry = agentRegistry;
         this.tsdtvLibrary = tsdtvLibrary;
         this.tsdtv = tsdtv;
-        this.ownerKey = ownerKey;
         this.fileUtils = fileUtils;
     }
 
     @GET
     @Produces(MediaType.TEXT_HTML)
-    public TSDTVView getTsdtvPage(@QueryParam("playerType") String playerType) {
+    public TSDTVView getTsdtvPage(@Auth Optional<User> user, @QueryParam("playerType") String playerType) {
         TSDTVView.PlayerType playerTypeEnum = StringUtils.isBlank(playerType) ?
                 TSDTVView.PlayerType.videojs : TSDTVView.PlayerType.valueOf(playerType);
-        return new TSDTVView(tsdtvLibrary, playerTypeEnum);
+        return new TSDTVView(tsdtvLibrary, playerTypeEnum, user.orElse(null));
     }
 
     @GET
@@ -94,6 +93,7 @@ public class TSDTVResource {
     @Path("/agent/{agentId}")
     public Response agentHeartbeat(@Context HttpServletRequest request,
                                    @PathParam("agentId") String agentId,
+                                   @Auth TSDTVAgent agent,
                                    Heartbeat heartbeat) {
         log.info("Received TSDTV agent heartbeat: {}", agentId);
         log.debug("Heartbeat detail: {}", heartbeat);
@@ -122,12 +122,10 @@ public class TSDTVResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/stop")
+    @RolesAllowed({"staff"})
     public Response stop(@Context HttpServletRequest request,
-                         @QueryParam("password") String password) {
-        log.info("Received stop instruction, password={}", password);
-        if (!StringUtils.equals(password, ownerKey)) {
-            throw new NotAuthorizedException("Invalid password");
-        }
+                         @Auth User user) {
+        log.info("Received stop instruction, user={}", user.getUsername());
         tsdtv.stopNowPlaying();
         return Response.accepted("Accepted").build();
     }
@@ -136,12 +134,9 @@ public class TSDTVResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/stopped")
     public Response stopped(@Context HttpServletRequest request,
-                            @QueryParam("password") String password,
+                            @Auth TSDTVAgent agent,
                             StoppedPlayingNotification notification) {
-        log.info("Received stopped notification, password={}: {}", password, notification);
-        if (!StringUtils.equals(password, ownerKey)) {
-            throw new NotAuthorizedException("Invalid password");
-        }
+        log.info("Received stopped notification, agent={}: {}", agent.getAgentId(), notification);
         tsdtv.reportStopped(notification.getMediaId());
         return Response.accepted("Accepted").build();
     }

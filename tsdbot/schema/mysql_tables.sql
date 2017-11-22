@@ -29,3 +29,19 @@ CREATE TABLE TSDTVEpisodicItem (
   INDEX (seriesName),
   INDEX (seasonName)
 ) ENGINE=InnoDB, CHARSET=utf8;
+
+CREATE TABLE User (
+  id VARCHAR(36) NOT NULL PRIMARY KEY,
+  username VARCHAR(100) NOT NULL,
+  passwordHash VARCHAR(255) NOT NULL,
+  emailAddress VARCHAR(150),
+  role ENUM('peon', 'staff', 'admin') NOT NULL DEFAULT 'peon',
+  lastLoggedInTime TIMESTAMP,
+  lastLoggedInFrom VARCHAR(100),
+  CONSTRAINT UNIQUE (username),
+  CONSTRAINT UNIQUE (emailAddress),
+  INDEX (username),
+  INDEX (emailAddress),
+  INDEX (role),
+  INDEX (lastLoggedInTime)
+) ENGINE=InnoDB, CHARSET=utf8;

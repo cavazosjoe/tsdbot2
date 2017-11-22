@@ -1,7 +1,7 @@
 agentId: "schooly-hq-agent"
 tsdbotUrl: "http://tsdbot.teamschoolyd.net/tsdtv"
 inventoryPath: "/tsdtv"
-password: "Grace&Glory"
+password: "RfRjAotPMa"
 
 logging:
   level: INFO

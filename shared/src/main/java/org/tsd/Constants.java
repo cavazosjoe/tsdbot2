@@ -16,6 +16,9 @@ public class Constants {
     public static class Annotations {
         public static final String SELF = "self";
         public static final String OWNER = "owner";
+        public static final String ENCRYPTION_KEY = "encryptionKey";
+        public static final String SERVICE_AUTH_PASSWORD = "serviceAuthPassword";
+
         public static final String BITLY_USER = "bitlyUser";
         public static final String BITLY_API_KEY = "bitlyApiKey";
 
@@ -30,7 +33,16 @@ public class Constants {
         public static final String GOOGLE_API_KEY = "googleApiKey";
         public static final String TSDTV_STREAM_URL = "tsdtvStreamUrl";
         public static final String TSDTV_CHANNEL = "tsdtvChannel";
-        public static final String OWNER_KEY = "ownerKey";
+    }
+
+    public static class Auth {
+        public static final String BASIC_AUTH = "Authorization";
+        public static final String SERVICE_AUTH_TOKEN_HEADER = "TSDHQ-Service-Auth-Token";
+        public static final String SERVICE_AUTH_NAME_HEADER = "TSDHQ-Service-Auth-Name";
+        public static final String BEARER = "Bearer";
+        public static final String USER_REALM = "TSDHQ_User";
+        public static final String SERVICE_REALM = "TSDHQ_Service";
+        public static final String TOKEN_KEY = "tsdhq_token";
     }
 
     public static class History {
@@ -187,5 +199,8 @@ public class Constants {
         public static final String FILENAMES_VIEW = "filenames.ftl";
         public static final String HUSTLE_VIEW = "hustle.ftl";
         public static final String TSDTV_VIEW = "tsdtv.ftl";
+        public static final String LOGIN_VIEW = "login.ftl";
+        public static final String DASHBOARD_VIEW = "dashboard.ftl";
+        public static final String SPLASH_VIEW = "splash.ftl";
     }
 }

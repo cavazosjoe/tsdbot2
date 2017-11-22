@@ -71,7 +71,7 @@
                     '               </div>' +
                     '               <div class="media-body">' +
                     '                   '+ nowPlayingBody +
-                    '                   <button type="button" class="btn btn-sm btn-danger" data-toggle="modal" data-target="#stopModal">Kill</button>' +
+                    '                   <button type="button" class="btn btn-sm btn-danger kill">Kill</button>' +
                     '               </div>' +
                     '           </div>' +
                     '       </div>' +
@@ -258,14 +258,17 @@
             });
 
             // stop()
-            $("#stopNowPlayingForm").on('submit', function(e) {
-                e.preventDefault();
-                var queryArgs = $("#stopNowPlayingForm").serialize();
+            $(document).on("click", ".kill", function() {
                 $.ajax({
                     type: "POST",
-                    url: '/tsdtv/stop?'+queryArgs,
+                    url: '/tsdtv/stop',
                     success: function(response) {
                         console.log('Success');
+                        $.bootstrapGrowl('Stopping video...', {
+                            type: 'info',
+                            width: 'auto',
+                            allow_dismiss: true
+                        });
                     },
                     error: function(xhr, status, error) {
                         $.bootstrapGrowl(xhr.responseText, {
@@ -275,7 +278,6 @@
                         });
                     }
                 });
-                $('#stopModal').modal('toggle');
             })
         });
 
@@ -405,30 +407,6 @@
                     <iframe src="https://discordapp.com/widget?id=355036967022362635&theme=dark" width="350" height="500" allowtransparency="true" frameborder="0"></iframe>
                 </div>
 
-            </div>
-        </div>
-    </div>
-    <div class="modal fade" id="stopModal" tabindex="-1" role="dialog" aria-labelledby="control-modal-label" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <form id="stopNowPlayingForm">
-                    <div class="modal-header">
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                        <h4 class="modal-title" id="control-modal-label">Enter Password</h4>
-                    </div>
-                    <div id="control-modal-body" class="modal-body">
-                        <label>
-                            Password
-                            <input type="text" name="password"/>
-                        </label>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="submit" class="btn btn-success">Submit</button>
-                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                    </div>
-                </form>
             </div>
         </div>
     </div>

@@ -5,7 +5,6 @@ import fr.bmartel.speedtest.SpeedTestReport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tsd.Constants;
-import org.tsd.client.TSDBotClient;
 import org.tsd.rest.v1.tsdtv.Heartbeat;
 import org.tsd.rest.v1.tsdtv.HeartbeatResponse;
 import org.tsd.rest.v1.tsdtv.Inventory;

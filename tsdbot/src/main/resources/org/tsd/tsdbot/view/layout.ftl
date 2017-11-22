@@ -45,6 +45,30 @@
 
                     return JSON.stringify( obj );
                 }
+
+                $(function() {
+
+                    // play()
+                    $(document).on("click", ".logout", function () {
+                        $.ajax({
+                            type: "POST",
+                            url: "/logout",
+                            contentType: "application/json; charset=utf-8",
+                            success: function (msg) {
+                                console.log("logged out");
+                                window.location.href = '/'
+                            },
+                            error: function (xhr, status, error) {
+                                $.bootstrapGrowl(xhr.responseText, {
+                                    type: 'danger',
+                                    width: 'auto',
+                                    allow_dismiss: true
+                                });
+                            }
+                        });
+                        event.preventDefault();
+                    });
+                });
             </script>
         </head>
         <body>
@@ -77,6 +101,9 @@
 
                     <ul class="nav navbar-nav navbar-right">
                         <li><a href="#">A TSD Production</a></li>
+                        <#if loggedInUser??>
+                            <li><button class="btn btn-secondary logout">Logout</button></li>
+                        </#if>
                     </ul>
                 </div>
             </div>

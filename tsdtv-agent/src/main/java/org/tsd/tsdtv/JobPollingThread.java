@@ -5,7 +5,6 @@ import com.google.inject.Singleton;
 import net.bramp.ffmpeg.job.FFmpegJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tsd.client.TSDBotClient;
 import org.tsd.rest.v1.tsdtv.Media;
 import org.tsd.rest.v1.tsdtv.job.*;
 import org.tsd.util.RetryInstructionFailedException;

@@ -1,5 +1,7 @@
 package org.tsd.tsdbot;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -8,18 +10,24 @@ import de.btobastian.javacord.DiscordAPI;
 import de.btobastian.javacord.Javacord;
 import io.dropwizard.Application;
 import io.dropwizard.assets.AssetsBundle;
+import io.dropwizard.auth.PolymorphicAuthDynamicFeature;
+import io.dropwizard.auth.PolymorphicAuthValueFactoryProvider;
 import io.dropwizard.db.DataSourceFactory;
 import io.dropwizard.hibernate.HibernateBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import io.dropwizard.views.ViewBundle;
+import org.glassfish.hk2.utilities.binding.AbstractBinder;
+import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import org.quartz.Scheduler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tsd.Constants;
 import org.tsd.app.module.UtilityModule;
 import org.tsd.tsdbot.app.config.TSDBotConfiguration;
 import org.tsd.tsdbot.app.module.*;
 import org.tsd.tsdbot.async.ChannelThreadFactory;
+import org.tsd.tsdbot.auth.*;
 import org.tsd.tsdbot.discord.DiscordChannel;
 import org.tsd.tsdbot.filename.FilenameLibrary;
 import org.tsd.tsdbot.filename.S3FilenameLibrary;
@@ -41,6 +49,8 @@ import org.tsd.tsdbot.tsdtv.quartz.TSDTVJobFactory;
 import twitter4j.Twitter;
 import twitter4j.TwitterFactory;
 
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
 import java.util.Arrays;
 import java.util.List;
 
@@ -49,6 +59,7 @@ public class TSDBotApplication extends Application<TSDBotConfiguration> {
     private static final Logger log = LoggerFactory.getLogger(TSDBotApplication.class);
 
     private final HibernateBundle<TSDBotConfiguration> hibernate = new HibernateBundle<TSDBotConfiguration>(
+            User.class,
             OdbItem.class,
             TSDTVAgent.class,
             TSDTVEpisodicItem.class) {
@@ -144,12 +155,43 @@ public class TSDBotApplication extends Application<TSDBotConfiguration> {
         api.registerListener(messageListener);
         historyCache.initialize();
 
+        /*
+        Configure authentication
+         */
+        TokenAuthFilter tokenAuthFilter = new TokenAuthFilter.Builder()
+                .setAuthenticator(injector.getInstance(TokenAuthenticator.class))
+                .setAuthorizer(new UserAuthorizer())
+                .setRealm(Constants.Auth.USER_REALM)
+                .setUnauthorizedHandler((prefix, realm) -> Response.seeOther(UriBuilder.fromUri("/login").build()).build())
+                .buildAuthFilter();
+
+        ServiceAuthFilter serviceAuthFilter = injector.getInstance(ServiceAuthFilter.Builder.class)
+                .setAuthenticator(injector.getInstance(ServiceAuthenticator.class))
+                .setRealm(Constants.Auth.SERVICE_REALM)
+                .buildAuthFilter();
+
+        final PolymorphicAuthDynamicFeature authDynamicFeature = new PolymorphicAuthDynamicFeature<>(
+                ImmutableMap.of(
+                        TSDTVAgent.class, serviceAuthFilter,
+                        User.class, tokenAuthFilter));
+
+        final AbstractBinder binder = new PolymorphicAuthValueFactoryProvider.Binder<>(
+                ImmutableSet.of(TSDTVAgent.class, User.class));
+
+        environment.jersey().register(authDynamicFeature);
+        environment.jersey().register(binder);
+        environment.jersey().register(RolesAllowedDynamicFeature.class);
+
+        environment.jersey().register(injector.getInstance(SplashResource.class));
+        environment.jersey().register(injector.getInstance(LoginResource.class));
+        environment.jersey().register(injector.getInstance(LogoutResource.class));
         environment.jersey().register(injector.getInstance(FilenameResource.class));
         environment.jersey().register(injector.getInstance(RandomFilenameResource.class));
         environment.jersey().register(injector.getInstance(HustleResource.class));
         environment.jersey().register(injector.getInstance(PrintoutResource.class));
         environment.jersey().register(injector.getInstance(TSDTVResource.class));
         environment.jersey().register(injector.getInstance(JobResource.class));
+        environment.jersey().register(injector.getInstance(DashboardResource.class));
     }
 
     private static void configureQuartz(Injector injector) {

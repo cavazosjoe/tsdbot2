@@ -6,9 +6,10 @@ import org.tsd.tsdbot.db.BaseEntity;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import java.security.Principal;
 
 @Entity
-public class TSDTVAgent extends BaseEntity {
+public class TSDTVAgent extends BaseEntity implements Principal {
 
     private String agentId;
 
@@ -48,5 +49,10 @@ public class TSDTVAgent extends BaseEntity {
                 .append("status", status)
                 .append("lastHeartbeatFrom", lastHeartbeatFrom)
                 .toString();
+    }
+
+    @Override
+    public String getName() {
+        return agentId;
     }
 }

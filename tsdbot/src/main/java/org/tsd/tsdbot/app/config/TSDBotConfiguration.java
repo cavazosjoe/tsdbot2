@@ -29,7 +29,11 @@ public class TSDBotConfiguration extends Configuration {
 
     @NotEmpty
     @NotNull
-    private String ownerKey;
+    private String encryptionKey;
+
+    @NotEmpty
+    @NotNull
+    private String serviceAuthPassword;
 
     @NotEmpty
     @NotNull
@@ -67,12 +71,20 @@ public class TSDBotConfiguration extends Configuration {
     @NotNull
     private TSDTVConfig tsdtv;
 
-    public String getOwnerKey() {
-        return ownerKey;
+    public String getEncryptionKey() {
+        return encryptionKey;
     }
 
-    public void setOwnerKey(String ownerKey) {
-        this.ownerKey = ownerKey;
+    public void setEncryptionKey(String encryptionKey) {
+        this.encryptionKey = encryptionKey;
+    }
+
+    public String getServiceAuthPassword() {
+        return serviceAuthPassword;
+    }
+
+    public void setServiceAuthPassword(String serviceAuthPassword) {
+        this.serviceAuthPassword = serviceAuthPassword;
     }
 
     public FfmpegConfig getFfmpeg() {

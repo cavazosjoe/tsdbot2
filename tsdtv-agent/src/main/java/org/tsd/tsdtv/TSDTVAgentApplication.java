@@ -13,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tsd.app.module.FfmpegModule;
 import org.tsd.app.module.UtilityModule;
-import org.tsd.client.TSDBotClient;
 
 import java.io.File;
 import java.io.IOException;

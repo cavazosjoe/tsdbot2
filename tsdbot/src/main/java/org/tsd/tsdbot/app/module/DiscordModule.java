@@ -45,10 +45,6 @@ public class DiscordModule extends AbstractModule {
                 .annotatedWith(Names.named(Constants.Annotations.OWNER))
                 .toInstance(owner.get());
 
-        bind(String.class)
-                .annotatedWith(Names.named(Constants.Annotations.OWNER_KEY))
-                .toInstance(configuration.getOwnerKey());
-
         bind(DiscordUser.class)
                 .annotatedWith(Names.named(Constants.Annotations.SELF))
                 .toInstance(new DiscordUser(api.getYourself()));
