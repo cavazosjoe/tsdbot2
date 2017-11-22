@@ -97,12 +97,15 @@
                         <li>
                             <a href="/filenames">Filenames</a>
                         </li>
+                        <li>
+                            <a href="/tsdtv">TSDTV</a>
+                        </li>
                     </ul>
 
                     <ul class="nav navbar-nav navbar-right">
                         <li><a href="#">A TSD Production</a></li>
                         <#if loggedInUser??>
-                            <li><button class="btn btn-secondary logout">Logout</button></li>
+                            <li><button class="btn btn-secondary my-2 my-sm-0 logout">Logout</button></li>
                         </#if>
                     </ul>
                 </div>
