@@ -99,7 +99,7 @@ public class Hustle {
 
                 } catch (Exception e) {
                     log.error("Error retrieving text sentiment, response=\"\n" + responseString + "\"", e);
-                    owner.sendMessage("Error calculating hustle quotient: `" + responseString + "`");
+//                    owner.sendMessage("Error calculating hustle quotient: `" + responseString + "`");
                     throttleSeconds = Math.min(MAX_THROTTLE_PERIOD_SECONDS, throttleSeconds*2);
                     nextApiCallAttempt = LocalDateTime.now(clock).plusSeconds(throttleSeconds);
                 }

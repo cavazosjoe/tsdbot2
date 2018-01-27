@@ -1,7 +1,6 @@
 package org.tsd.tsdtv;
 
 import com.google.inject.name.Named;
-import fr.bmartel.speedtest.SpeedTestReport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tsd.Constants;
@@ -59,9 +58,9 @@ public class HeartbeatThread implements Runnable {
             heartbeat.setHealthy(true);
             heartbeat.setInventory(inventory);
 
-            SpeedTestReport report = networkMonitor.getReport();
-            if (report != null) {
-                heartbeat.setUploadBitrate(report.getTransferRateBit().doubleValue());
+            Long uploadRateBitsPerSecond = networkMonitor.getUploadSpeedBitsPerSecond();
+            if (uploadRateBitsPerSecond != null) {
+                heartbeat.setUploadBitrate(uploadRateBitsPerSecond.doubleValue());
             } else if (networkMonitor.getError() != null) {
                 heartbeat.setUploadBitrate(null);
                 heartbeat.setHealthy(false);

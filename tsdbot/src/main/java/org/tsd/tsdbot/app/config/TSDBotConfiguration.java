@@ -71,6 +71,18 @@ public class TSDBotConfiguration extends Configuration {
     @NotNull
     private TSDTVConfig tsdtv;
 
+    @NotNull
+    @NotEmpty
+    private String newsApiKey;
+
+    public String getNewsApiKey() {
+        return newsApiKey;
+    }
+
+    public void setNewsApiKey(String newsApiKey) {
+        this.newsApiKey = newsApiKey;
+    }
+
     public String getEncryptionKey() {
         return encryptionKey;
     }

@@ -16,16 +16,13 @@ public class NetworkMonitor implements Runnable {
 
     private static final Logger log = LoggerFactory.getLogger(NetworkMonitor.class);
 
-    private static final int MAX_DURATION_MILLIS
-            = new Long(TimeUnit.MINUTES.toMillis(1)).intValue();
-
     private static final long TEST_PERIOD_MILLIS = TimeUnit.MINUTES.toMillis(5);
 
-    private static final String TARGET_URI = "http://posttestserver.com/post.php";
-    private static final int UPLOAD_FILE_SIZE = 500_000;
+    private static final String TARGET_URI = "http://2.testdebit.info/";
+    private static final int UPLOAD_FILE_SIZE_BYTES = 1_000_000;
 
     private boolean shutdown = false;
-    private SpeedTestReport report = null;
+    private Long uploadSpeedBitsPerSecond = null;
     private SpeedTestError error = null;
 
     @Inject
@@ -38,29 +35,41 @@ public class NetworkMonitor implements Runnable {
         while (!shutdown) {
             SpeedTestSocket speedTestSocket = new SpeedTestSocket();
             speedTestSocket.addSpeedTestListener(new ISpeedTestListener() {
+
+                private Long bitsPerSecond = null;
+
                 @Override
                 public void onCompletion(SpeedTestReport speedTestReport) {
-                    publishReport(speedTestReport);
+                    System.out.println("Speed test completed");
+                    uploadSpeedBitsPerSecond = bitsPerSecond;
+                    error = null;
                 }
 
                 @Override
                 public void onProgress(float v, SpeedTestReport speedTestReport) {
-                    log.debug("Progress {}: bitrate = {} kbit/s",
+                    log.info("Progress {}: bitrate = {} kbit/s",
                             speedTestReport.getProgressPercent(),
                             speedTestReport.getTransferRateBit().longValue() / 1000);
+                    if (speedTestReport.getProgressPercent() == 100f && bitsPerSecond == null) {
+                        bitsPerSecond = speedTestReport.getTransferRateBit().longValue();
+                        log.info("Upload finished, uploaded bits = {}, speed = {} kbit/s",
+                                UPLOAD_FILE_SIZE_BYTES*8, bitsPerSecond/1000);
+                    }
                 }
 
                 @Override
                 public void onError(SpeedTestError speedTestError, String s) {
-                    publishError(speedTestError, s);
+                    System.err.println(String.format("Speed test ERROR (%s): %s", speedTestError, s));
+                    uploadSpeedBitsPerSecond = null;
+                    error = speedTestError;
                 }
             });
             log.debug("Starting network monitor upload");
-            speedTestSocket.startFixedUpload(TARGET_URI,
-                    UPLOAD_FILE_SIZE,
-                    MAX_DURATION_MILLIS);
+            speedTestSocket.startUpload(TARGET_URI,
+                    UPLOAD_FILE_SIZE_BYTES,
+                    100);
             try {
-                log.debug("Finished network monitor upload, sleeping for {} seconds", TEST_PERIOD_MILLIS/1000);
+                log.debug("Network monitor upload initiated, sleeping for {} seconds", TEST_PERIOD_MILLIS/1000);
                 Thread.sleep(TEST_PERIOD_MILLIS);
             } catch (InterruptedException e) {
                 log.error("Interrupted", e);
@@ -69,28 +78,15 @@ public class NetworkMonitor implements Runnable {
         }
     }
 
-    public SpeedTestReport getReport() {
-        return report;
+    public Long getUploadSpeedBitsPerSecond() {
+        return uploadSpeedBitsPerSecond;
     }
 
     public SpeedTestError getError() {
         return error;
     }
 
-    private void publishReport(SpeedTestReport report) {
-        log.info("Speed test finished: bitrate = {} kbit/s", report.getTransferRateBit().longValue()/1000);
-        this.report = report;
-        this.error = null;
-    }
-
-    private void publishError(SpeedTestError error, String message) {
-        log.error("Speed test ERROR ({}): {}", error, message);
-        this.report = null;
-        this.error = error;
-    }
-
     public void shutdown() {
         this.shutdown = true;
     }
-
 }

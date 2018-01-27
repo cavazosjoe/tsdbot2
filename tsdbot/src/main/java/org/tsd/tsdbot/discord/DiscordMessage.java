@@ -6,15 +6,14 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.Instant;
 import java.util.concurrent.TimeUnit;
 
 public class DiscordMessage<T extends MessageRecipient> {
 
     private final String id;
     private final String content;
-    private final LocalDateTime timestamp;
+    private final Instant timestamp;
     private final DiscordUser author;
     private final T recipient;
     private MessageType type;
@@ -27,7 +26,7 @@ public class DiscordMessage<T extends MessageRecipient> {
         this.id = message.getId();
         this.content = message.getContent();
         this.author = new DiscordUser(message.getAuthor());
-        this.timestamp = LocalDateTime.ofInstant(message.getCreationDate().toInstant(), ZoneId.of("UTC"));
+        this.timestamp = message.getCreationDate().toInstant();
 
         if (message.getChannelReceiver() != null) {
             this.recipient = (T) new DiscordChannel(message.getChannelReceiver());
@@ -51,7 +50,7 @@ public class DiscordMessage<T extends MessageRecipient> {
         return recipient;
     }
 
-    public LocalDateTime getTimestamp() {
+    public Instant getTimestamp() {
         return timestamp;
     }
 

@@ -27,6 +27,16 @@ public class FfmpegUtil {
 
     private static final String LANGUAGE_TAG = "language";
 
+    // amount of total bandwidth used for streaming, 8%
+    private static final double STREAMING_PERCENTAGE = 0.08;
+
+    // amount of streaming bandwidth used for video, 80%
+    private static final double VIDEO_PERCENTAGE = 0.8;
+
+    private static final long DEFAULT_AUDIO_BITRATE =  128_000;
+    private static final long DEFAULT_VIDEO_BITRATE = 1200_000;
+
+
     public static MediaInfo getMediaInfo(FFprobe fFprobe, File file) throws IOException {
         log.debug("Getting media info for file: {}", file);
         FFmpegProbeResult probeResult = fFprobe.probe(file.getAbsolutePath());
@@ -98,7 +108,19 @@ public class FfmpegUtil {
                 .findAny().orElse(null);
     }
 
-    public static FFmpegBuilder buildFfmpeg(Media media, String tsdtvUrl) {
+    public static FFmpegBuilder buildFfmpeg(Media media, String tsdtvUrl, Long availableBandwidthBits) {
+
+        long videoBitrate = DEFAULT_VIDEO_BITRATE;
+        long audioBitrate = DEFAULT_AUDIO_BITRATE;
+
+        if (availableBandwidthBits != null && availableBandwidthBits > 0) {
+            long availableBandwidthForStreaming = (long) (availableBandwidthBits * STREAMING_PERCENTAGE);
+            videoBitrate = Math.min( (long) (availableBandwidthForStreaming*VIDEO_PERCENTAGE), DEFAULT_VIDEO_BITRATE );
+            audioBitrate = Math.min( availableBandwidthForStreaming-videoBitrate, DEFAULT_AUDIO_BITRATE );
+        }
+
+        log.info("availableBandwidth={}, video={}, audio={}", availableBandwidthBits, videoBitrate, audioBitrate);
+
         FFmpegOutputBuilder outputBuilder = new FFmpegBuilder()
                 .addExtraArgs("-re") // stream at native frame rate
                 .setInput(media.getMediaInfo().getFilePath())
@@ -107,11 +129,11 @@ public class FfmpegUtil {
 
                 .setAudioCodec("aac")
                 .setAudioSampleRate(44_100)
-                .setAudioBitRate(128_000)
+                .setAudioBitRate(audioBitrate)
 
                 .setVideoCodec("libx264")
                 .setVideoFrameRate(24, 1)
-                .setVideoBitRate(1200_000)
+                .setVideoBitRate(videoBitrate)
                 .setVideoPixelFormat("yuv420p")
 
                 .setStrict(FFmpegBuilder.Strict.EXPERIMENTAL);

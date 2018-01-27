@@ -6,6 +6,7 @@ import io.dropwizard.hibernate.UnitOfWorkAwareProxyFactory;
 import org.hibernate.SessionFactory;
 import org.tsd.tsdbot.app.config.TSDBotConfiguration;
 import org.tsd.tsdbot.auth.UserDao;
+import org.tsd.tsdbot.news.NewsTopicDao;
 import org.tsd.tsdbot.odb.OdbItemDao;
 import org.tsd.tsdbot.tsdtv.TSDTVAgentDao;
 import org.tsd.tsdbot.tsdtv.TSDTVEpisodicItemDao;
@@ -41,6 +42,11 @@ public class HibernateModule extends AbstractModule {
                 .create(TSDTVEpisodicItemDao.class, SessionFactory.class, hibernate.getSessionFactory());
         bind(TSDTVEpisodicItemDao.class)
                 .toInstance(tsdtvEpisodicItemDao);
+
+        NewsTopicDao newsTopicDao = proxyFactory
+                .create(NewsTopicDao.class, SessionFactory.class, hibernate.getSessionFactory());
+        bind(NewsTopicDao.class)
+                .toInstance(newsTopicDao);
 
         bind(SessionFactory.class)
                 .toInstance(hibernate.getSessionFactory());

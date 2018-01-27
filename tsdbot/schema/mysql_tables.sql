@@ -45,3 +45,10 @@ CREATE TABLE User (
   INDEX (role),
   INDEX (lastLoggedInTime)
 ) ENGINE=InnoDB, CHARSET=utf8;
+
+CREATE TABLE NewsTopic (
+  userId VARCHAR(255) NOT NULL,
+  topic VARCHAR(255) NOT NULL,
+  CONSTRAINT UNIQUE (userId, topic),
+  INDEX (userId)
+) ENGINE=InnoDB, CHARSET=utf8;

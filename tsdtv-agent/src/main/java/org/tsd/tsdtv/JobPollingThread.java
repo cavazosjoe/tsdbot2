@@ -24,11 +24,13 @@ public class JobPollingThread implements Runnable {
     private final TSDTVPlayer player;
     private final AgentInventory agentInventory;
     private final TSDBotClient client;
+    private final NetworkMonitor networkMonitor;
 
     private boolean shutdown = false;
 
     @Inject
     public JobPollingThread(TSDBotClient tsdBotClient,
+                            NetworkMonitor networkMonitor,
                             TSDTVPlayer player,
                             AgentInventory agentInventory,
                             TSDBotClient client) {
@@ -36,6 +38,7 @@ public class JobPollingThread implements Runnable {
         this.player = player;
         this.agentInventory = agentInventory;
         this.client = client;
+        this.networkMonitor = networkMonitor;
     }
 
     @Override
@@ -75,7 +78,7 @@ public class JobPollingThread implements Runnable {
                     throw new Exception("Could not find media in inventory with id "+mediaId);
                 }
                 log.info("Found media: {}", media);
-                player.play(media, targetUrl, state -> {
+                player.play(media, targetUrl, getAvailableBandwidth(), state -> {
                     boolean error = !FFmpegJob.State.FINISHED.equals(state);
                     try {
                         RetryUtil.executeWithRetry("SendMediaStoppedNotification",
@@ -102,5 +105,15 @@ public class JobPollingThread implements Runnable {
             }
             tsdBotClient.sendJobResult(result);
         }
+    }
+
+    private Long getAvailableBandwidth() {
+        Long availableBandwidth = networkMonitor.getUploadSpeedBitsPerSecond();
+        if (availableBandwidth != null) {
+            log.info("Available bandwidth: {} kbit/s", availableBandwidth/1000);
+        } else {
+            log.info("No bandwidth information");
+        }
+        return availableBandwidth;
     }
 }

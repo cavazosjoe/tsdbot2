@@ -23,9 +23,7 @@ public class LogoutResource {
     @POST
     public Response logout(@Auth Optional<User> userOptional,
                            @CookieParam(Constants.Auth.TOKEN_KEY) Cookie cookie) {
-        if (userOptional.isPresent()) {
-            log.info("Logging out user: {}", userOptional.get().getUsername());
-        }
+        userOptional.ifPresent(user -> log.info("Logging out user: {}", user.getUsername()));
         NewCookie newCookie = new NewCookie(cookie, "delete cookie", 0, false);
         return Response.seeOther(UriBuilder.fromUri("/").build()).cookie(newCookie).build();
     }

@@ -17,8 +17,6 @@ import org.tsd.app.module.UtilityModule;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.stream.Stream;
 
 public class TSDTVAgentApplication extends Application<TSDTVAgentConfiguration> {
@@ -35,9 +33,6 @@ public class TSDTVAgentApplication extends Application<TSDTVAgentConfiguration> 
     }
 
     public void run(final TSDTVAgentConfiguration tsdtvAgentConfiguration, Environment environment) throws Exception {
-
-        final ExecutorService executorService
-                = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
         Injector injector = Guice.createInjector(new AbstractModule() {
             @Override

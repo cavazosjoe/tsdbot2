@@ -240,7 +240,7 @@ public class TSDTV {
                 Commercial commercial = (Commercial) queuedItem.getMedia();
                 try {
                     log.info("Playing commercial: {}", commercial);
-                    player.play(queuedItem.getMedia(), tsdtvStreamUrl, (state) -> {
+                    player.play(queuedItem.getMedia(), tsdtvStreamUrl, null, (state) -> {
                         if (state.equals(FFmpegJob.State.FINISHED)) {
                             log.info("Commercial stream ended normally");
                         } else {

@@ -2,7 +2,7 @@ FROM openjdk:8
 
 RUN mkdir /ffmpeg
 
-RUN wget -O /tmp/ffmpeg.tar.xz https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-64bit-static.tar.xz
+RUN wget -O /tmp/ffmpeg.tar.xz https://s3-us-west-2.amazonaws.com/tsdbot-public/ffmpeg-release-64bit-static.tar.xz
 #RUN ["/bin/bash", "if [ ! -d /ffmpeg ] ; then mkdir -p /ffmpeg; fi"]
 RUN tar xvf /tmp/ffmpeg.tar.xz -C /ffmpeg
 #CMD if [[ ! -f /usr/bin/ffmpeg ]] ; then ln -sf /opt/ffmpeg/ffmpeg-3.4-64bit-static/ffmpeg /usr/bin/ffmpeg; fi

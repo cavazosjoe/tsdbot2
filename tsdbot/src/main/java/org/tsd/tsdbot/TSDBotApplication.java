@@ -52,6 +52,7 @@ import twitter4j.TwitterFactory;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 
 public class TSDBotApplication extends Application<TSDBotConfiguration> {
@@ -137,10 +138,12 @@ public class TSDBotApplication extends Application<TSDBotConfiguration> {
                 injector.getInstance(HustleHandler.class),
                 injector.getInstance(PrintoutHandler.class),
                 injector.getInstance(OmniDatabaseHandler.class),
-                injector.getInstance(TSDTVHandler.class));
+                injector.getInstance(TSDTVHandler.class),
+                injector.getInstance(MorningHandler.class));
 
-        List<MessageFilter> messageFilters = Arrays.asList(
-                injector.getInstance(HustleFilter.class));
+//        List<MessageFilter> messageFilters = Arrays.asList(
+//                injector.getInstance(HustleFilter.class));
+        List<MessageFilter> messageFilters = new LinkedList<>();
 
         for (MessageHandler<DiscordChannel> channelMessageHandler : channelMessageHandlers) {
             messageListener.addChannelHandler(channelMessageHandler);

@@ -18,6 +18,7 @@ public class Constants {
         public static final String OWNER = "owner";
         public static final String ENCRYPTION_KEY = "encryptionKey";
         public static final String SERVICE_AUTH_PASSWORD = "serviceAuthPassword";
+        public static final String NEWS_API_KEY = "newsApiKey";
 
         public static final String BITLY_USER = "bitlyUser";
         public static final String BITLY_API_KEY = "bitlyApiKey";
@@ -155,6 +156,10 @@ public class Constants {
 
     public static class Hustle {
         public static final String COMMAND = ".hustle";
+    }
+
+    public static class Morning {
+        public static final String PREFIX = ".morning";
     }
 
     public static class OmniDatabase {
