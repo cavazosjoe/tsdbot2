@@ -119,7 +119,7 @@ public class MorningHandler extends MessageHandler<DiscordChannel> {
 
             log.info("News topics to fetch for user {}: {}", messageAuthor, topicsToFetch);
 
-            List<NewsArticle> articles = getArticlesForTopics(topicsToFetch);
+            List<NewsArticleWithTopic> articles = getArticlesForTopics(topicsToFetch);
 
             StringBuilder response = new StringBuilder("Good morning, ").append(messageAuthor).append(". ");
             if (CollectionUtils.isEmpty(newsTopics)) {
@@ -128,16 +128,16 @@ public class MorningHandler extends MessageHandler<DiscordChannel> {
                 response.append("Here is your news briefing for this morning:");
             }
 
-            channel.sendMessage(response.toString());
-
-            for (NewsArticle article : articles) {
-                String msg = String.format("(%s) \"%s\": %s",
-                        article.getSource().getName(),
-                        article.getTitle(),
-                        bitlyUtil.shortenUrl(article.getUrl()));
-                channel.sendMessage(msg);
+            for (NewsArticleWithTopic article : articles) {
+                response.append("\n");
+                String msg = String.format("(%s) \"%s\": <%s>",
+                        StringUtils.capitalize(article.topic),
+                        article.article.getTitle(),
+                        bitlyUtil.shortenUrl(article.article.getUrl()));
+                response.append(msg);
             }
 
+            channel.sendMessage(response.toString());
             briefingsLastFetched.put(message.getAuthor().getId(), new Date());
 
         } else if (parts.length > 1) {
@@ -193,11 +193,11 @@ public class MorningHandler extends MessageHandler<DiscordChannel> {
         }
     }
 
-    private List<NewsArticle> getArticlesForTopics(List<String> topics) throws URISyntaxException, IOException {
+    private List<NewsArticleWithTopic> getArticlesForTopics(List<String> topics) throws URISyntaxException, IOException {
         String fromDate = DateFormatUtils.format(DateUtils.addHours(new Date(), -24), "yyyy-MM-dd");
         log.info("Getting news articles for topics (from {}): {}", fromDate, topics);
 
-        List<NewsArticle> articlesToReturn = new LinkedList<>();
+        List<NewsArticleWithTopic> articlesToReturn = new LinkedList<>();
         Map<String, List<NewsArticle>> allArticles = new HashMap<>();
 
         for (String topic : topics) {
@@ -220,7 +220,7 @@ public class MorningHandler extends MessageHandler<DiscordChannel> {
                 } else {
                     NewsArticle article = entry.getValue().remove(0);
                     log.info("Returning news article for topic \"{}\": {}", entry.getKey(), article);
-                    articlesToReturn.add(article);
+                    articlesToReturn.add(new NewsArticleWithTopic(entry.getKey(), article));
                 }
             }
         }
@@ -238,6 +238,7 @@ public class MorningHandler extends MessageHandler<DiscordChannel> {
                 NewsQueryResult result = queryForNews(defaultTopic, fromDate);
                 NewsArticle article = result.getArticles().get(0);
                 log.info("Returning news article for default topic \"{}\": {}", defaultTopic, article);
+                articlesToReturn.add(new NewsArticleWithTopic(defaultTopic, article));
             }
         }
 
@@ -248,6 +249,7 @@ public class MorningHandler extends MessageHandler<DiscordChannel> {
     private NewsQueryResult queryForNews(String topic, String fromDate) throws URISyntaxException, IOException {
         URI uri = new URIBuilder("https://newsapi.org/v2/everything")
                 .addParameter("q", topic)
+                .addParameter("language", "en")
                 .addParameter("from", fromDate)
                 .addParameter("sortBy", "popularity")
                 .addParameter("apiKey", newsApiKey)
@@ -258,6 +260,24 @@ public class MorningHandler extends MessageHandler<DiscordChannel> {
             NewsQueryResult newsQueryResult = objectMapper.readValue(response.getEntity().getContent(), NewsQueryResult.class);
             log.info("News query result: \"{}\" -> {}", newsQueryResult);
             return newsQueryResult;
+        }
+    }
+
+    private static class NewsArticleWithTopic {
+        private final String topic;
+        private final NewsArticle article;
+
+        public NewsArticleWithTopic(String topic, NewsArticle article) {
+            this.topic = topic;
+            this.article = article;
+        }
+
+        public String getTopic() {
+            return topic;
+        }
+
+        public NewsArticle getArticle() {
+            return article;
         }
     }
 }
