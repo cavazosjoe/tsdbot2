@@ -9,8 +9,8 @@ import org.tsd.tsdbot.discord.DiscordMessage;
 import org.tsd.tsdbot.discord.MessageRecipient;
 import org.tsd.tsdbot.discord.MessageType;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 class History<T extends MessageRecipient> {
 
@@ -25,7 +25,7 @@ class History<T extends MessageRecipient> {
     }
 
     List<DiscordMessage<T>> getMessages() {
-        return buffer.stream().collect(Collectors.toList());
+        return new ArrayList<>(buffer);
     }
 
     void markMessage(String id, MessageType type) {

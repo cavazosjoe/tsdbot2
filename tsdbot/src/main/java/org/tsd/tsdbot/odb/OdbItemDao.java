@@ -11,7 +11,10 @@ import org.slf4j.LoggerFactory;
 import org.tsd.tsdbot.util.OdbUtils;
 
 import javax.persistence.Query;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class OdbItemDao extends AbstractDAO<OdbItem> {
@@ -72,7 +75,7 @@ public class OdbItemDao extends AbstractDAO<OdbItem> {
     }
 
     @UnitOfWork
-    public OdbItem searchForItem(Set<String> tags) throws OmniDbException {
+    public OdbItem searchForItem(List<String> tags) throws OmniDbException {
         log.info("Searching for item with tags: {}", tags);
         if (CollectionUtils.isEmpty(tags)) {
             return getRandomItem();

@@ -6,7 +6,6 @@ CREATE TABLE OdbItem (
 CREATE TABLE OdbTag (
   itemId VARCHAR(36) NOT NULL,
   tag VARCHAR(255) NOT NULL,
-  CONSTRAINT UNIQUE (itemId, tag),
   CONSTRAINT `fk_tag_item` FOREIGN KEY (itemId) REFERENCES OdbItem(id)
 ) ENGINE=InnoDB, CHARSET=utf8;
 

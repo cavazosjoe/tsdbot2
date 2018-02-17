@@ -101,16 +101,25 @@ public class FilenameHandler extends MessageHandler<DiscordChannel> {
         } else {
             switch (arguments[0]) {
                 case "add": {
+                    String url = null;
                     if (arguments.length  == 1) {
-                        message.getRecipient().sendMessage("USAGE: " + ".fname rando add <image url>");
+                        // check for attachments
+                        if (CollectionUtils.isNotEmpty(message.getAttachments())) {
+                            url = message.getAttachments().get(0).toString();
+                        }
                     } else {
-                        String url = arguments[1];
+                        url = arguments[1];
+                    }
+
+                    if (url != null) {
                         try {
                             filenameLibrary.addFileToRandomFilenameBucket(url);
                             message.getRecipient().sendMessage("Image successfully added to rando repo");
                         } catch (FilenameValidationException e) {
                             message.getRecipient().sendMessage("Error: " + e.getMessage());
                         }
+                    } else {
+                        message.getRecipient().sendMessage("USAGE: " + ".fname rando add <image url>");
                     }
                 }
             }

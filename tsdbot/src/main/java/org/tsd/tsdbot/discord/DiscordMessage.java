@@ -1,13 +1,17 @@
 package org.tsd.tsdbot.discord;
 
 import de.btobastian.javacord.entities.message.Message;
+import de.btobastian.javacord.entities.message.MessageAttachment;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
+import java.net.URL;
 import java.time.Instant;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public class DiscordMessage<T extends MessageRecipient> {
 
@@ -16,6 +20,7 @@ public class DiscordMessage<T extends MessageRecipient> {
     private final Instant timestamp;
     private final DiscordUser author;
     private final T recipient;
+    private final List<URL> attachments;
     private MessageType type;
 
     private final Message message;
@@ -27,6 +32,7 @@ public class DiscordMessage<T extends MessageRecipient> {
         this.content = message.getContent();
         this.author = new DiscordUser(message.getAuthor());
         this.timestamp = message.getCreationDate().toInstant();
+        this.attachments = message.getAttachments().stream().map(MessageAttachment::getUrl).collect(Collectors.toList());
 
         if (message.getChannelReceiver() != null) {
             this.recipient = (T) new DiscordChannel(message.getChannelReceiver());
@@ -36,6 +42,10 @@ public class DiscordMessage<T extends MessageRecipient> {
 
         this.type = StringUtils.equalsIgnoreCase(message.getAuthor().getName(), "tsdbot") ?
                 MessageType.SELF : MessageType.NORMAL;
+    }
+
+    public List<URL> getAttachments() {
+        return attachments;
     }
 
     public String getId() {
