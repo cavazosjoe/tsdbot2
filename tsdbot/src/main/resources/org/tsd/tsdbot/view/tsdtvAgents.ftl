@@ -6,8 +6,6 @@
     (function refresh_agents_list() {
         $.get('/tsdtv/agent/list',{},function(responseJson) {
 
-            console.log("Received list of TSDTV agents: " + JSON.stringify(responseJson));
-
             var htmlString = '';
 
             htmlString +=
