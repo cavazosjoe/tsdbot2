@@ -102,7 +102,7 @@ public class FilenameHandler extends MessageHandler<DiscordChannel> {
             switch (arguments[0]) {
                 case "add": {
                     String url = null;
-                    
+
                     if (arguments.length  == 1 && CollectionUtils.isNotEmpty(message.getAttachments())) {
                         // check for attachments
                         url = message.getAttachments().get(0).toString();

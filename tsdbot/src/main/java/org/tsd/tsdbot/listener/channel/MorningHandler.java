@@ -248,10 +248,10 @@ public class MorningHandler extends MessageHandler<DiscordChannel> {
 
     private NewsQueryResult queryForNews(String topic, String fromDate) throws URISyntaxException, IOException {
         URI uri = new URIBuilder("https://newsapi.org/v2/everything")
-                .addParameter("q", topic)
+                .addParameter("q", String.format("\"%s\"", topic))
                 .addParameter("language", "en")
                 .addParameter("from", fromDate)
-                .addParameter("sortBy", "popularity")
+                .addParameter("sortBy", "relevancy")
                 .addParameter("apiKey", newsApiKey)
                 .build();
         HttpGet get = new HttpGet(uri);
