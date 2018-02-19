@@ -206,6 +206,7 @@ public class Constants {
         public static final String TSDTV_VIEW = "tsdtv.ftl";
         public static final String LOGIN_VIEW = "login.ftl";
         public static final String DASHBOARD_VIEW = "dashboard.ftl";
+        public static final String TSDTV_AGENTS_VIEW = "tsdtvAgents.ftl";
         public static final String SPLASH_VIEW = "splash.ftl";
     }
 }

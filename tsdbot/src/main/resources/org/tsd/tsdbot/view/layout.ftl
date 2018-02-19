@@ -23,6 +23,7 @@
 
             <!--moment.js-->
             <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.19.1/moment.min.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.14/moment-timezone-with-data.min.js"></script>
 
             <!--Bootstrap Growl-->
             <script src="/assets/js/bootstrap-growl.min.js"></script>
@@ -86,20 +87,18 @@
                 </div>
                 <div class="navbar-collapse collapse" id="navbar-main">
                     <ul class="nav navbar-nav">
-                        <li class="dropdown">
-                            <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="themes">Hmm <span class="caret"></span></a>
-                            <ul class="dropdown-menu" aria-labelledby="themes">
-                                <li><a href="#">One</a></li>
-                                <li class="divider"></li>
-                                <li><a href="#">Two</a></li>
-                            </ul>
-                        </li>
                         <li>
                             <a href="/filenames">Filenames</a>
                         </li>
                         <li>
                             <a href="/tsdtv">TSDTV</a>
                         </li>
+
+                        <#if loggedInUser?? && loggedInUser.role.level gt 0>
+                        <li>
+                            <a href="/tsdtv/agent">Agents</a>
+                        </li>
+                        </#if>
                     </ul>
 
                     <ul class="nav navbar-nav navbar-right">

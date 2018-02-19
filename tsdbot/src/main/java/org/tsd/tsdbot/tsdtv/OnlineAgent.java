@@ -5,30 +5,30 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.tsd.rest.v1.tsdtv.Inventory;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 public class OnlineAgent {
 
     private TSDTVAgent agent;
-    private LocalDateTime lastHeartbeat;
-    private LocalDateTime inventoryLastUpdated = LocalDateTime.MIN;
+    private Instant lastHeartbeat;
+    private Instant inventoryLastUpdated = Instant.MIN;
     private Double bitrate;
     private Inventory inventory;
 
-    public void setInventoryLastUpdated(LocalDateTime inventoryLastUpdated) {
-        this.inventoryLastUpdated = inventoryLastUpdated;
-    }
-
-    public LocalDateTime getInventoryLastUpdated() {
-        return inventoryLastUpdated;
-    }
-
-    public LocalDateTime getLastHeartbeat() {
+    public Instant getLastHeartbeat() {
         return lastHeartbeat;
     }
 
-    public void setLastHeartbeat(LocalDateTime lastHeartbeat) {
+    public void setLastHeartbeat(Instant lastHeartbeat) {
         this.lastHeartbeat = lastHeartbeat;
+    }
+
+    public Instant getInventoryLastUpdated() {
+        return inventoryLastUpdated;
+    }
+
+    public void setInventoryLastUpdated(Instant inventoryLastUpdated) {
+        this.inventoryLastUpdated = inventoryLastUpdated;
     }
 
     public TSDTVAgent getAgent() {

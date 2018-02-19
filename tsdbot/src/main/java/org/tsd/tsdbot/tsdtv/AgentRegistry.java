@@ -11,6 +11,7 @@ import org.tsd.rest.v1.tsdtv.HeartbeatResponse;
 import org.tsd.tsdbot.tsdtv.job.JobQueue;
 
 import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -73,8 +74,8 @@ public class AgentRegistry {
         updateOnlineAgent(onlineAgent, agent, heartbeat);
         log.debug("Updated online agent info: {}", onlineAgent);
 
-        LocalDateTime inventoryExpiration
-                = LocalDateTime.now(clock).minus(Constants.TSDTV.INVENTORY_REFRESH_PERIOD_MINUTES, ChronoUnit.MINUTES);
+        Instant inventoryExpiration
+                = Instant.now(clock).minus(Constants.TSDTV.INVENTORY_REFRESH_PERIOD_MINUTES, ChronoUnit.MINUTES);
         LocalDateTime now = LocalDateTime.now(clock);
         log.debug("Inventory for {} last reported on: {}", onlineAgent.getInventoryLastUpdated());
         log.debug("Inventory for {} expires on: {} (now = {})", inventoryExpiration, now);
@@ -92,12 +93,12 @@ public class AgentRegistry {
 
     private void updateOnlineAgent(OnlineAgent onlineAgent, TSDTVAgent agent, Heartbeat heartbeat) {
         onlineAgent.setAgent(agent);
-        onlineAgent.setLastHeartbeat(LocalDateTime.now(clock));
+        onlineAgent.setLastHeartbeat(Instant.now(clock));
         onlineAgent.setBitrate(heartbeat.getUploadBitrate());
         if (heartbeat.getInventory() != null) {
             log.debug("Updating inventory for agent {}: {}", agent.getAgentId(), heartbeat.getInventory());
             onlineAgent.setInventory(heartbeat.getInventory());
-            onlineAgent.setInventoryLastUpdated(LocalDateTime.now(clock));
+            onlineAgent.setInventoryLastUpdated(Instant.now(clock));
         }
     }
 
@@ -147,7 +148,7 @@ public class AgentRegistry {
         @Override
         public void run() {
             while (!shutdown) {
-                LocalDateTime cutoff = LocalDateTime
+                Instant cutoff = Instant
                         .now(clock)
                         .minus(3*Constants.TSDTV.AGENT_HEARTBEAT_PERIOD_MILLIS, ChronoUnit.MILLIS);
                 log.debug("Checking for agents with last heartbeat before {}", cutoff);

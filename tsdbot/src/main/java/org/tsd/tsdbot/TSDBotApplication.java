@@ -1,5 +1,8 @@
 package org.tsd.tsdbot;
 
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.AbstractModule;
@@ -185,6 +188,11 @@ public class TSDBotApplication extends Application<TSDBotConfiguration> {
         environment.jersey().register(binder);
         environment.jersey().register(RolesAllowedDynamicFeature.class);
 
+        environment.getObjectMapper().registerModules(
+                new ParameterNamesModule(),
+                new Jdk8Module(),
+                new JavaTimeModule());
+
         environment.jersey().register(injector.getInstance(SplashResource.class));
         environment.jersey().register(injector.getInstance(LoginResource.class));
         environment.jersey().register(injector.getInstance(LogoutResource.class));
@@ -195,6 +203,7 @@ public class TSDBotApplication extends Application<TSDBotConfiguration> {
         environment.jersey().register(injector.getInstance(TSDTVResource.class));
         environment.jersey().register(injector.getInstance(JobResource.class));
         environment.jersey().register(injector.getInstance(DashboardResource.class));
+        environment.jersey().register(injector.getInstance(TSDTVAgentResource.class));
     }
 
     private static void configureQuartz(Injector injector) {

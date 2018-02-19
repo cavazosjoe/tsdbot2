@@ -4,12 +4,13 @@ import io.dropwizard.auth.Auth;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tsd.rest.v1.tsdtv.Heartbeat;
-import org.tsd.rest.v1.tsdtv.HeartbeatResponse;
 import org.tsd.rest.v1.tsdtv.PlayMediaRequest;
 import org.tsd.rest.v1.tsdtv.StoppedPlayingNotification;
 import org.tsd.tsdbot.auth.User;
-import org.tsd.tsdbot.tsdtv.*;
+import org.tsd.tsdbot.tsdtv.MediaNotFoundException;
+import org.tsd.tsdbot.tsdtv.TSDTV;
+import org.tsd.tsdbot.tsdtv.TSDTVAgent;
+import org.tsd.tsdbot.tsdtv.TSDTVException;
 import org.tsd.tsdbot.tsdtv.library.TSDTVLibrary;
 import org.tsd.tsdbot.util.FileUtils;
 import org.tsd.tsdbot.view.TSDTVView;
@@ -30,17 +31,14 @@ public class TSDTVResource {
 
     private static final Logger log = LoggerFactory.getLogger(TSDTVResource.class);
 
-    private final AgentRegistry agentRegistry;
     private final TSDTVLibrary tsdtvLibrary;
     private final TSDTV tsdtv;
     private final FileUtils fileUtils;
 
     @Inject
-    public TSDTVResource(AgentRegistry agentRegistry,
-                         TSDTVLibrary tsdtvLibrary,
+    public TSDTVResource(TSDTVLibrary tsdtvLibrary,
                          TSDTV tsdtv,
                          FileUtils fileUtils) {
-        this.agentRegistry = agentRegistry;
         this.tsdtvLibrary = tsdtvLibrary;
         this.tsdtv = tsdtv;
         this.fileUtils = fileUtils;
@@ -87,25 +85,9 @@ public class TSDTVResource {
         }
     }
 
-    @PUT
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    @Path("/agent/{agentId}")
-    public Response agentHeartbeat(@Context HttpServletRequest request,
-                                   @PathParam("agentId") String agentId,
-                                   @Auth TSDTVAgent agent,
-                                   Heartbeat heartbeat) {
-        log.info("Received TSDTV agent heartbeat: {}", agentId);
-        log.debug("Heartbeat detail: {}", heartbeat);
-        try {
-            HeartbeatResponse response = agentRegistry.handleHeartbeat(heartbeat, request.getRemoteAddr());
-            return Response.accepted(response).build();
-        } catch (BlacklistedAgentException e) {
-            log.warn("Received heartbeat from blacklisted agent: {}", agentId);
-            return Response.status(403).build();
-        }
-    }
-
+    /*
+    When a user clicks a "Play" button to start a TSDTV video
+     */
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/play")
@@ -119,6 +101,9 @@ public class TSDTVResource {
         }
     }
 
+    /*
+    When a user clicks the "Stop" button to halt a TSDTV video
+     */
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/stop")
@@ -130,6 +115,9 @@ public class TSDTVResource {
         return Response.accepted("Accepted").build();
     }
 
+    /*
+    Sent by an agent when a TSDTV video has stopped playing
+     */
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/stopped")
