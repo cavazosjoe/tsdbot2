@@ -251,7 +251,7 @@ public class MorningHandler extends MessageHandler<DiscordChannel> {
                 .addParameter("q", String.format("\"%s\"", topic))
                 .addParameter("language", "en")
                 .addParameter("from", fromDate)
-                .addParameter("sortBy", "relevancy")
+                .addParameter("sortBy", "popularity")
                 .addParameter("apiKey", newsApiKey)
                 .build();
         HttpGet get = new HttpGet(uri);
