@@ -1,31 +1,22 @@
 package org.tsd.tsdbot.listener.channel;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.inject.name.Named;
 import de.btobastian.javacord.DiscordAPI;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.time.DateFormatUtils;
-import org.apache.commons.lang3.time.DateUtils;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.utils.URIBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tsd.Constants;
 import org.tsd.tsdbot.discord.DiscordChannel;
 import org.tsd.tsdbot.discord.DiscordMessage;
 import org.tsd.tsdbot.listener.MessageHandler;
 import org.tsd.tsdbot.news.NewsArticle;
+import org.tsd.tsdbot.news.NewsClient;
 import org.tsd.tsdbot.news.NewsQueryResult;
 import org.tsd.tsdbot.news.NewsTopicDao;
 import org.tsd.tsdbot.util.BitlyUtil;
 
 import javax.inject.Inject;
 import java.io.IOException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -47,23 +38,20 @@ public class MorningHandler extends MessageHandler<DiscordChannel> {
     );
 
     private final NewsTopicDao newsTopicDao;
-    private final HttpClient httpClient;
-    private final String newsApiKey;
+    private final NewsClient newsClient;
     private final BitlyUtil bitlyUtil;
 
     private final Map<String, Date> briefingsLastFetched = new HashMap<>();
 
     @Inject
     public MorningHandler(DiscordAPI api,
-                          HttpClient httpClient,
+                          NewsClient newsClient,
                           NewsTopicDao newsTopicDao,
-                          BitlyUtil bitlyUtil,
-                          @Named(Constants.Annotations.NEWS_API_KEY) String newsApiKey) {
+                          BitlyUtil bitlyUtil) {
         super(api);
         this.bitlyUtil = bitlyUtil;
-        this.httpClient = httpClient;
         this.newsTopicDao = newsTopicDao;
-        this.newsApiKey = newsApiKey;
+        this.newsClient = newsClient;
     }
 
     @Override
@@ -194,15 +182,14 @@ public class MorningHandler extends MessageHandler<DiscordChannel> {
     }
 
     private List<NewsArticleWithTopic> getArticlesForTopics(List<String> topics) throws URISyntaxException, IOException {
-        String fromDate = DateFormatUtils.format(DateUtils.addHours(new Date(), -24), "yyyy-MM-dd");
-        log.info("Getting news articles for topics (from {}): {}", fromDate, topics);
+        log.info("Getting news articles for topics: {}", topics);
 
         List<NewsArticleWithTopic> articlesToReturn = new LinkedList<>();
         Map<String, List<NewsArticle>> allArticles = new HashMap<>();
 
         for (String topic : topics) {
             log.info("Getting news articles for topic: {}", topic);
-            NewsQueryResult result = queryForNews(topic, fromDate);
+            NewsQueryResult result = newsClient.queryForNews(topic);
             allArticles.putIfAbsent(topic, new LinkedList<>());
             allArticles.get(topic).addAll(result.getArticles());
         }
@@ -235,7 +222,7 @@ public class MorningHandler extends MessageHandler<DiscordChannel> {
                 }
                 log.info("Fetching articles for default topic: {}", defaultTopic);
                 allArticles.putIfAbsent(defaultTopic, new LinkedList<>());
-                NewsQueryResult result = queryForNews(defaultTopic, fromDate);
+                NewsQueryResult result = newsClient.queryForNews(defaultTopic);
                 NewsArticle article = result.getArticles().get(0);
                 log.info("Returning news article for default topic \"{}\": {}", defaultTopic, article);
                 articlesToReturn.add(new NewsArticleWithTopic(defaultTopic, article));
@@ -244,23 +231,6 @@ public class MorningHandler extends MessageHandler<DiscordChannel> {
 
         log.info("Compiled news articles: {}", articlesToReturn);
         return articlesToReturn;
-    }
-
-    private NewsQueryResult queryForNews(String topic, String fromDate) throws URISyntaxException, IOException {
-        URI uri = new URIBuilder("https://newsapi.org/v2/everything")
-                .addParameter("q", String.format("\"%s\"", topic))
-                .addParameter("language", "en")
-                .addParameter("from", fromDate)
-                .addParameter("sortBy", "popularity")
-                .addParameter("apiKey", newsApiKey)
-                .build();
-        HttpGet get = new HttpGet(uri);
-        ObjectMapper objectMapper = new ObjectMapper();
-        try (CloseableHttpResponse response = (CloseableHttpResponse) httpClient.execute(get)) {
-            NewsQueryResult newsQueryResult = objectMapper.readValue(response.getEntity().getContent(), NewsQueryResult.class);
-            log.info("News query result: \"{}\" -> {}", newsQueryResult);
-            return newsQueryResult;
-        }
     }
 
     private static class NewsArticleWithTopic {

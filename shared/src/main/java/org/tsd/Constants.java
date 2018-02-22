@@ -162,6 +162,10 @@ public class Constants {
         public static final String PREFIX = ".morning";
     }
 
+    public static class News {
+        public static final String PREFIX = ".news";
+    }
+
     public static class OmniDatabase {
         public static final String COMMAND_PREFIX = ".odb";
     }
