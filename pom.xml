@@ -13,6 +13,7 @@
     <module>tsdbot</module>
     <module>tsdtv-agent</module>
     <module>shared</module>
+      <module>tsdbotalexa</module>
   </modules>
 
   <properties>

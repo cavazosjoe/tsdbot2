@@ -38,7 +38,10 @@ public class TSDTVPlayer {
         this.executorService = executorService;
     }
 
-    public void play(Media media, String targetUrl, Long availableBandwidth, Consumer<FFmpegJob.State> handleEnd) throws Exception {
+    public void play(Media media,
+                     String targetUrl,
+                     Long availableBandwidth,
+                     Consumer<FFmpegJob.State> handleEnd) throws Exception {
         log.info("Playing media, targetUrl={}, media={}", targetUrl, media);
 
         FFmpegBuilder builder = FfmpegUtil.buildFfmpeg(media, targetUrl, availableBandwidth);

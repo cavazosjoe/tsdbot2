@@ -38,7 +38,7 @@ public class TSDTVAgentResource {
     @Produces(MediaType.TEXT_HTML)
     @RolesAllowed({"staff"})
     public TSDTVAgentsView getLoginPage(@Auth User user) {
-        log.debug("User accessed dashboard: {}", user.getUsername());
+        log.debug("User accessed TSDTV agent page: {}", user.getUsername());
         return new TSDTVAgentsView(user);
     }
 
