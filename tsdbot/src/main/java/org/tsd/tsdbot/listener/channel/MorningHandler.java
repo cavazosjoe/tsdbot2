@@ -30,6 +30,7 @@ public class MorningHandler extends MessageHandler<DiscordChannel> {
     private static final Logger log = LoggerFactory.getLogger(MorningHandler.class);
 
     private static final int NEWS_STORIES_PER_DIGEST = 3;
+    private static final int MAX_DEFAULT_NEWS_TRIES = 100;
 
     private static final List<String> DEFAULT_TOPICS = Arrays.asList(
             "red pandas",
@@ -107,8 +108,6 @@ public class MorningHandler extends MessageHandler<DiscordChannel> {
 
             log.info("News topics to fetch for user {}: {}", messageAuthor, topicsToFetch);
 
-            List<NewsArticleWithTopic> articles = getArticlesForTopics(topicsToFetch);
-
             StringBuilder response = new StringBuilder("Good morning, ").append(messageAuthor).append(". ");
             if (CollectionUtils.isEmpty(newsTopics)) {
                 response.append("I don't have any subscribed topics for you, but I'll see what I can do.");
@@ -116,16 +115,23 @@ public class MorningHandler extends MessageHandler<DiscordChannel> {
                 response.append("Here is your news briefing for this morning:");
             }
 
-            for (NewsArticleWithTopic article : articles) {
-                response.append("\n");
-                String msg = String.format("(%s) \"%s\": <%s>",
-                        StringUtils.capitalize(article.topic),
-                        article.article.getTitle(),
-                        bitlyUtil.shortenUrl(article.article.getUrl()));
-                response.append(msg);
+            List<NewsArticleWithTopic> articles = getArticlesForTopics(topicsToFetch);
+
+            if (CollectionUtils.isEmpty(articles)) {
+                channel.sendMessage("You're out of luck, "+messageAuthor+": I couldn't find any articles for you");
+            } else {
+                for (NewsArticleWithTopic article : articles) {
+                    response.append("\n");
+                    String msg = String.format("(%s) \"%s\": <%s>",
+                            StringUtils.capitalize(article.topic),
+                            article.article.getTitle(),
+                            bitlyUtil.shortenUrl(article.article.getUrl()));
+                    response.append(msg);
+                }
+
+                channel.sendMessage(response.toString());
             }
 
-            channel.sendMessage(response.toString());
             briefingsLastFetched.put(message.getAuthor().getId(), new Date());
 
         } else if (parts.length > 1) {
@@ -215,7 +221,9 @@ public class MorningHandler extends MessageHandler<DiscordChannel> {
         log.info("Initial news compilation completed, articlesToReturn ({}) = {}",
                 articlesToReturn.size(), articlesToReturn);
 
-        while (articlesToReturn.size() < NEWS_STORIES_PER_DIGEST) {
+        int tryCount = 0;
+
+        while (articlesToReturn.size() < NEWS_STORIES_PER_DIGEST && ++tryCount < MAX_DEFAULT_NEWS_TRIES) {
             for (String defaultTopic : DEFAULT_TOPICS) {
                 if (articlesToReturn.size() >= NEWS_STORIES_PER_DIGEST) {
                     break;
@@ -223,9 +231,13 @@ public class MorningHandler extends MessageHandler<DiscordChannel> {
                 log.info("Fetching articles for default topic: {}", defaultTopic);
                 allArticles.putIfAbsent(defaultTopic, new LinkedList<>());
                 NewsQueryResult result = newsClient.queryForNews(defaultTopic);
-                NewsArticle article = result.getArticles().get(0);
-                log.info("Returning news article for default topic \"{}\": {}", defaultTopic, article);
-                articlesToReturn.add(new NewsArticleWithTopic(defaultTopic, article));
+                if (CollectionUtils.isNotEmpty(result.getArticles())) {
+                    NewsArticle article = result.getArticles().get(0);
+                    log.info("Returning news article for default topic \"{}\": {}", defaultTopic, article);
+                    articlesToReturn.add(new NewsArticleWithTopic(defaultTopic, article));
+                } else {
+                    log.warn("Found no news articles for default topic: {}", defaultTopic);
+                }
             }
         }
 

@@ -40,7 +40,6 @@ public class HistoryRequest<T extends MessageRecipient> {
     public List<DiscordMessage<T>> apply(History<T> history) {
         Stream<DiscordMessage<T>> stream = history.getMessages()
                 .stream()
-                .limit(limit)
                 .filter(msg -> !Objects.equals(msg, exclude));
 
         for (Predicate<DiscordMessage> filter : filters) {
@@ -48,6 +47,7 @@ public class HistoryRequest<T extends MessageRecipient> {
         }
 
         return stream
+                .limit(limit)
                 .sorted(Comparator.comparing((DiscordMessage msg) -> msg.getTimestamp()).reversed())
                 .collect(Collectors.toList());
     }

@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import org.apache.commons.lang3.StringUtils;
 import org.tsd.tsdbot.discord.DiscordMessage;
+import org.tsd.tsdbot.util.MiscUtils;
 
 public class LengthFilter implements MessageHistoryFilter {
 
@@ -18,7 +19,8 @@ public class LengthFilter implements MessageHistoryFilter {
 
     @Override
     public boolean test(DiscordMessage discordMessage) {
-        int length = StringUtils.length(discordMessage.getContent());
+        String sanitized = MiscUtils.getSanitizedContent(discordMessage);
+        int length = StringUtils.length(sanitized);
         return length >= min && length <= max;
     }
 }

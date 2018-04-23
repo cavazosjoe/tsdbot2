@@ -1,7 +1,9 @@
 package org.tsd.tsdbot.util;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.RandomUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tsd.Constants;
@@ -11,6 +13,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Random;
 import java.util.regex.Matcher;
 
 public class MiscUtils {
@@ -19,6 +22,14 @@ public class MiscUtils {
 
     public static <T> T getRandomItemInList(List<T> list) {
         return CollectionUtils.isEmpty(list) ? null : list.get(RandomUtils.nextInt(0, list.size()));
+    }
+
+    public static <T> T getRandomItemInArray(T[] array) {
+        return getRandomItemInArray(array, new Random());
+    }
+
+    public static <T> T getRandomItemInArray(T[] array, Random random) {
+        return ArrayUtils.isEmpty(array) ? null : array[random.nextInt(array.length)];
     }
 
     public static String formatRandom(String input, List<String> formattingChoices) {
@@ -47,8 +58,34 @@ public class MiscUtils {
         return result;
     }
 
+    public static String stripEmojisFromMessage(DiscordMessage<?> message) {
+        return StringUtils.replaceAll(message.getContent(), Constants.Emoji.EMOJI_MENTION_REGEX, "");
+    }
+
+    public static String getSanitizedContent(DiscordMessage<?> message) {
+        String result = message.getContent();
+
+        // strip emojis
+        result = stripEmojisFromMessage(message);
+
+        // strip URLs
+        result = StringUtils.replaceAll(result, Constants.URL_REGEX, "");
+
+        // reduce to one space between words
+        result = StringUtils.replaceAll(result, "\\s+", " ");
+
+        // trim
+        result = StringUtils.trim(result);
+
+        return result;
+    }
+
     public static String bold(String input) {
-        return "**"+input+"**";
+        return StringUtils.isBlank(input) ? "" : "**"+StringUtils.trim(input)+"**";
+    }
+
+    public static String italicize(String input) {
+        return StringUtils.isBlank(input) ? "" : "*"+StringUtils.trim(input)+"*";
     }
 
     public static BufferedImage overlayImages(BufferedImage bgImage,

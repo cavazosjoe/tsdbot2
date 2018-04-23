@@ -143,7 +143,8 @@ public class TSDBotApplication extends Application<TSDBotConfiguration> {
                 injector.getInstance(OmniDatabaseHandler.class),
                 injector.getInstance(TSDTVHandler.class),
                 injector.getInstance(MorningHandler.class),
-                injector.getInstance(NewsHandler.class)
+                injector.getInstance(NewsHandler.class),
+                injector.getInstance(RecapHandler.class)
         );
 
 //        List<MessageFilter> messageFilters = Arrays.asList(

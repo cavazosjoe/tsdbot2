@@ -107,7 +107,7 @@ public class Constants {
     public static class Emoji {
         public static final String EMOJI_URL_FORMAT = "https://cdn.discordapp.com/emojis/%s.png";
 
-        public static final String EMOJI_MENTION_REGEX = "<(\\w+):(\\d+)>";
+        public static final String EMOJI_MENTION_REGEX = "<:(\\w+):(\\d+)>";
         public static final Pattern EMOJI_MENTION_PATTERN = Pattern.compile(EMOJI_MENTION_REGEX);
     }
 

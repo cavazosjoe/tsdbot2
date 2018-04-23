@@ -8,6 +8,7 @@ import org.tsd.tsdbot.discord.DiscordChannel;
 import org.tsd.tsdbot.discord.DiscordMessage;
 import org.tsd.tsdbot.history.HistoryCache;
 import org.tsd.tsdbot.history.HistoryRequest;
+import org.tsd.tsdbot.history.filter.FilterFactory;
 import org.tsd.tsdbot.listener.MessageHandler;
 
 import javax.inject.Inject;
@@ -22,15 +23,16 @@ public class ReplaceHandler extends MessageHandler<DiscordChannel> {
     private static final Pattern REPLACE_PATTERN = Pattern.compile("^r/([^/]+)/([^/]*)(.*)$");
 
     private final HistoryCache historyCache;
+    private final FilterFactory filterFactory;
 
     @Inject
-    public ReplaceHandler(DiscordAPI api, HistoryCache historyCache) {
+    public ReplaceHandler(DiscordAPI api, HistoryCache historyCache, FilterFactory filterFactory) {
         super(api);
         this.historyCache = historyCache;
+        this.filterFactory = filterFactory;
     }
 
     private String tryStringReplace(List<DiscordMessage<DiscordChannel>> messages, String text) {
-
         Matcher matcher = REPLACE_PATTERN.matcher(text);
         if (matcher.find()) {
 
@@ -72,7 +74,9 @@ public class ReplaceHandler extends MessageHandler<DiscordChannel> {
     @Override
     public void doHandle(DiscordMessage<DiscordChannel> message, DiscordChannel channel) throws Exception {
         log.info("Handling replace: channel={}, message={}", message.getRecipient(), message.getContent());
-        HistoryRequest<DiscordChannel> request = HistoryRequest.create(channel, message);
+        HistoryRequest<DiscordChannel> request = HistoryRequest.create(channel, message)
+                .withFilter(filterFactory.createNoFunctionsFilter())
+                .withFilter(filterFactory.createNoOwnMessagesFilter());
         List<DiscordMessage<DiscordChannel>> messages = historyCache.getChannelHistory(request);
         log.info("Retrieved {} messages in channel history", messages.size());
         String result = tryStringReplace(messages, message.getContent());

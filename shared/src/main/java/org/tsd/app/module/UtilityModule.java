@@ -5,6 +5,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClients;
 
 import java.time.Clock;
+import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -25,5 +26,8 @@ public class UtilityModule extends AbstractModule {
 
         bind(Clock.class)
                 .toInstance(Clock.systemUTC());
+
+        bind(Random.class)
+                .toInstance(new Random());
     }
 }
