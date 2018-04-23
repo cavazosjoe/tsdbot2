@@ -48,7 +48,7 @@ public class MiscUtils {
         String text = message.getContent();
         List<String> result = new LinkedList<>();
         if (text != null) {
-            Matcher matcher = Constants.Emoji.EMOJI_MENTION_PATTERN.matcher(text);
+            Matcher matcher = Constants.Emoji.CUSTOM_EMOJI_MENTION_PATTERN.matcher(text);
             while (matcher.find()) {
                 log.debug("Parsed emoji from text: \"{}\" -> {},{}",
                         text, matcher.group(1), matcher.group(2));
@@ -59,7 +59,8 @@ public class MiscUtils {
     }
 
     public static String stripEmojisFromMessage(DiscordMessage<?> message) {
-        return StringUtils.replaceAll(message.getContent(), Constants.Emoji.EMOJI_MENTION_REGEX, "");
+        String stripped = StringUtils.replaceAll(message.getContent(), Constants.Emoji.CUSTOM_EMOJI_MENTION_REGEX, "");
+        return StringUtils.replaceAll(stripped, Constants.Emoji.STANDARD_EMOJI_REGEX, "");
     }
 
     public static String getSanitizedContent(DiscordMessage<?> message) {

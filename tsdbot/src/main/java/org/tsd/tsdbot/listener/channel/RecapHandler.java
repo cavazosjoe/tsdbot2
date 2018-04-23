@@ -29,7 +29,7 @@ public class RecapHandler extends MessageHandler<DiscordChannel> {
     private static final Logger log = LoggerFactory.getLogger(RecapHandler.class);
 
     // pre-shuffling limit
-    private static final int MESSAGE_HISTORY_COUNT = 500;
+    private static final int MESSAGE_HISTORY_COUNT = 5_000;
 
     // number of dramatic messages to replay in chat
     private static final int DRAMA_MESSAGE_COUNT = 4;

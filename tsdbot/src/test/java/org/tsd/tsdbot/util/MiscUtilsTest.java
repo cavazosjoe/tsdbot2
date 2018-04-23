@@ -17,7 +17,7 @@ public class MiscUtilsTest {
     public void testSanitizeMessage() {
         DiscordMessage message = mock(DiscordMessage.class);
         when(message.getContent())
-                .thenReturn("here is some text <:emoji:13489031234> https://www.youtube.com/yes/?huhhh=3.jpg boy howdy");
+                .thenReturn("here is some text <:emoji:13489031234> https://www.youtube.com/yes/?huhhh=3.jpg :smirk: boy howdy");
         String sanitized = MiscUtils.getSanitizedContent(message);
         assertThat(sanitized, is("here is some text boy howdy"));
     }
