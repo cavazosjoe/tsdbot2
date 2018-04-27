@@ -15,7 +15,7 @@ public class ReleaseFetcherThread implements Runnable {
 
     private static final Logger log = LoggerFactory.getLogger(ReleaseFetcherThread.class);
 
-    private static final long SLEEP_PERIOD = TimeUnit.SECONDS.toMillis(5);
+    private static final long SLEEP_PERIOD = TimeUnit.MINUTES.toMillis(30);
 
     private final List<? extends ReleaseFetcher> fetchers;
     private boolean shutdown = false;
