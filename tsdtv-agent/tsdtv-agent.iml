@@ -49,7 +49,6 @@
     <orderEntry type="library" name="Maven: org.glassfish:javax.el:3.0.0" level="project" />
     <orderEntry type="library" name="Maven: io.dropwizard:dropwizard-configuration:1.1.4" level="project" />
     <orderEntry type="library" name="Maven: com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.8.10" level="project" />
-    <orderEntry type="library" name="Maven: org.yaml:snakeyaml:1.17" level="project" />
     <orderEntry type="library" name="Maven: io.dropwizard:dropwizard-logging:1.1.4" level="project" />
     <orderEntry type="library" name="Maven: io.dropwizard.metrics:metrics-logback:3.2.2" level="project" />
     <orderEntry type="library" name="Maven: org.slf4j:jul-to-slf4j:1.7.24" level="project" />
@@ -110,6 +109,15 @@
     <orderEntry type="library" name="Maven: fr.bmartel:jspeedtest:1.31.2" level="project" />
     <orderEntry type="library" name="Maven: commons-net:commons-net:3.6" level="project" />
     <orderEntry type="library" name="Maven: fr.bmartel:http-endec:1.04" level="project" />
+    <orderEntry type="library" name="Maven: com.rometools:rome:1.9.0" level="project" />
+    <orderEntry type="library" name="Maven: com.rometools:rome-utils:1.9.0" level="project" />
+    <orderEntry type="library" name="Maven: org.jdom:jdom2:2.0.6" level="project" />
+    <orderEntry type="library" name="Maven: com.github.atomashpolskiy:bt-core:1.7" level="project" />
+    <orderEntry type="library" name="Maven: com.github.atomashpolskiy:bt-bencoding:1.7" level="project" />
+    <orderEntry type="library" name="Maven: org.yaml:snakeyaml:1.17" level="project" />
+    <orderEntry type="library" name="Maven: com.google.inject.extensions:guice-multibindings:4.1.0" level="project" />
+    <orderEntry type="library" name="Maven: com.github.atomashpolskiy:bt-http-tracker-client:1.7" level="project" />
+    <orderEntry type="library" name="Maven: com.github.atomashpolskiy:bt-dht:1.7" level="project" />
     <orderEntry type="library" name="Maven: com.google.inject:guice:4.1.0" level="project" />
     <orderEntry type="library" name="Maven: javax.inject:javax.inject:1" level="project" />
     <orderEntry type="library" name="Maven: aopalliance:aopalliance:1.0" level="project" />

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.TypeLiteral;
 import com.google.inject.name.Names;
 import io.dropwizard.Application;
 import io.dropwizard.setup.Environment;
@@ -13,10 +14,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tsd.app.module.FfmpegModule;
 import org.tsd.app.module.UtilityModule;
+import org.tsd.tsdtv.module.TorrentModule;
+import org.tsd.tsdtv.release.ReleaseFetcherThread;
+import org.tsd.tsdtv.release.ReleaseSource;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 public class TSDTVAgentApplication extends Application<TSDTVAgentConfiguration> {
@@ -39,6 +45,7 @@ public class TSDTVAgentApplication extends Application<TSDTVAgentConfiguration> 
             protected void configure() {
 
                 install(new UtilityModule());
+                install(new TorrentModule(tsdtvAgentConfiguration));
 
                 log.info("Binding agentId: {}", tsdtvAgentConfiguration.getAgentId());
                 bind(String.class)
@@ -86,12 +93,17 @@ public class TSDTVAgentApplication extends Application<TSDTVAgentConfiguration> 
                 log.info("Built TSDBot client: {}", tsdBotClient);
                 bind(TSDBotClient.class)
                         .toInstance(tsdBotClient);
+
+                bind(new TypeLiteral<Map<ReleaseSource, List<String>>>() {})
+                        .annotatedWith(Names.named("monitoringReleases"))
+                        .toInstance(tsdtvAgentConfiguration.getReleases());
             }
         });
 
         Stream.of(injector.getInstance(NetworkMonitor.class),
                 injector.getInstance(HeartbeatThread.class),
-                injector.getInstance(JobPollingThread.class))
+                injector.getInstance(JobPollingThread.class),
+                injector.getInstance(ReleaseFetcherThread.class))
                 .map(runnable -> new Thread(runnable, runnable.getClass()+"-ServiceThread"))
                 .peek(thread -> log.warn("Starting thread: {}", thread.getName()))
                 .forEach(Thread::start);

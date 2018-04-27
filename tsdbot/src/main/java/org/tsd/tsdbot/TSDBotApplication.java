@@ -208,6 +208,7 @@ public class TSDBotApplication extends Application<TSDBotConfiguration> {
         environment.jersey().register(injector.getInstance(DashboardResource.class));
         environment.jersey().register(injector.getInstance(TSDTVAgentResource.class));
         environment.jersey().register(injector.getInstance(LoggingResource.class));
+        environment.jersey().register(injector.getInstance(TSDTVReleaseResource.class));
     }
 
     private static void configureQuartz(Injector injector) {

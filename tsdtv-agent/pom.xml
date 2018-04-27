@@ -20,6 +20,7 @@
 
   <properties>
     <mainClass>org.tsd.tsdtv.TSDTVAgentApplication</mainClass>
+    <bt-version>1.7</bt-version>
   </properties>
 
   <dependencyManagement>
@@ -61,6 +62,32 @@
       <groupId>fr.bmartel</groupId>
       <artifactId>jspeedtest</artifactId>
       <version>1.31.2</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.rometools</groupId>
+      <artifactId>rome</artifactId>
+      <version>1.9.0</version>
+    </dependency>
+
+    <!--BitTorrent-->
+    <dependency>
+      <groupId>com.github.atomashpolskiy</groupId>
+      <artifactId>bt-core</artifactId>
+      <version>${bt-version}</version>
+    </dependency>
+    <!-- for the sake of keeping the core with minimum number of 3-rd party
+         dependencies HTTP tracker support is shipped as a separate module;
+         you may omit this dependency if only UDP trackers are going to be used -->
+    <dependency>
+      <groupId>com.github.atomashpolskiy</groupId>
+      <artifactId>bt-http-tracker-client</artifactId>
+      <version>${bt-version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.github.atomashpolskiy</groupId>
+      <artifactId>bt-dht</artifactId>
+      <version>${bt-version}</version>
     </dependency>
 
   </dependencies>

@@ -26,6 +26,8 @@ public class AgentInventory {
 
     private final Set<File> invalidFiles = new HashSet<>();
 
+    private boolean forceOverride = false;
+
     @Inject
     public AgentInventory(@Named("inventory") File inventoryDirectory,
                           @Named("agentId") String agentId,
@@ -172,5 +174,13 @@ public class AgentInventory {
                 .filter(file -> !invalidFiles.contains(file))
                 .sorted(Comparator.comparing(file -> file.getName().toLowerCase()))
                 .collect(Collectors.toList());
+    }
+
+    public boolean isForceOverride() {
+        return forceOverride;
+    }
+
+    public void setForceOverride(boolean forceOverride) {
+        this.forceOverride = forceOverride;
     }
 }

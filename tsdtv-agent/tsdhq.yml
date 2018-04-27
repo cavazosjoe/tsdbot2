@@ -14,6 +14,7 @@ logging:
         timeZone: UTC
   loggers:
     net.bramp: WARN
+    bt.net: FATAL
 
 ffmpeg:
   ffmpegExec: "/home/joe/bin/ffmpeg"
@@ -26,3 +27,7 @@ server:
   adminConnectors:
   - type: http
     port: 9001
+
+releasesDirectory: "/tsdtv-releases"
+releases:
+  horrible_subs: ["Major 2nd", "Megalo", "Lupin"]

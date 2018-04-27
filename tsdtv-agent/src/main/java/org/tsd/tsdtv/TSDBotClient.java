@@ -15,9 +15,11 @@ import org.slf4j.LoggerFactory;
 import org.tsd.Constants;
 import org.tsd.rest.v1.tsdtv.Heartbeat;
 import org.tsd.rest.v1.tsdtv.HeartbeatResponse;
+import org.tsd.rest.v1.tsdtv.NewReleaseNotification;
 import org.tsd.rest.v1.tsdtv.StoppedPlayingNotification;
 import org.tsd.rest.v1.tsdtv.job.Job;
 import org.tsd.rest.v1.tsdtv.job.JobResult;
+import org.tsd.tsdtv.release.Release;
 
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -144,6 +146,36 @@ public class TSDBotClient {
             }
         } catch (Exception e) {
             log.error("Error sending job result: " + result, e);
+        }
+    }
+
+    public void notifyNewRelease(Release release) {
+        try {
+            URIBuilder uriBuilder = new URIBuilder(tsdbotUrl.toURI())
+                    .setPath("/release");
+            URI uri = uriBuilder.build();
+            log.debug("Sending new release notification, URI={}, release={}", uri, release);
+
+            NewReleaseNotification notification = new NewReleaseNotification();
+            notification.setSeries(release.getSeriesName());
+            notification.setEpisodeName(release.getEpisodeName());
+            notification.setEpisodeNumber(release.getEpisodeNumber());
+
+            HttpPut put = new HttpPut(uri);
+            applyAuthHeader(put);
+            applyJsonEntity(put, notification);
+
+            try (CloseableHttpResponse response = getResponseWithRedundancy(httpClient, put)) {
+                if (response.getStatusLine().getStatusCode() / 100 != 2) {
+                    String msg = String.format("HTTP error %d: %s",
+                            response.getStatusLine().getStatusCode(), response.getStatusLine().getReasonPhrase());
+                    throw new Exception(msg);
+                }
+                String responseString = EntityUtils.toString(response.getEntity());
+                log.debug("New release notification successful, received response: {}", responseString);
+            }
+        } catch (Exception e) {
+            log.error("Error sending new notification release: " + release, e);
         }
     }
 

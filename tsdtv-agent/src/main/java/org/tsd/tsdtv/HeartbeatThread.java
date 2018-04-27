@@ -51,6 +51,7 @@ public class HeartbeatThread implements Runnable {
                 log.info("Inventory last sent: {}, sending...", inventoryLastSent);
                 inventory = agentInventory.compileInventory();
                 inventoryLastSent = LocalDateTime.now(clock);
+                agentInventory.setForceOverride(false);
             }
 
             Heartbeat heartbeat = new Heartbeat();
@@ -95,7 +96,7 @@ public class HeartbeatThread implements Runnable {
     }
 
     private boolean shouldRefreshInventory() {
-        return inventoryLastSent
+        return agentInventory.isForceOverride() || inventoryLastSent
                 .isBefore(LocalDateTime.now(clock).minus(Constants.TSDTV.INVENTORY_REFRESH_PERIOD_MINUTES, ChronoUnit.MINUTES));
     }
 
