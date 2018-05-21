@@ -52,5 +52,9 @@ public class S3Module extends AbstractModule {
         bind(String.class)
                 .annotatedWith(Names.named(Constants.Annotations.S3_TSDTV_COMMERCIALS_BUCKET))
                 .toInstance(configuration.getAws().getTsdtvCommercialsBucket());
+
+        bind(String.class)
+                .annotatedWith(Names.named(Constants.Annotations.S3_TSDBOT_CONFIG_BUCKET))
+                .toInstance(configuration.getAws().getConfigBucket());
     }
 }

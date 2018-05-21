@@ -42,7 +42,9 @@ public class DeejHandler extends MessageHandler<DiscordChannel> {
         HistoryRequest<DiscordChannel> request = HistoryRequest.create(channel, message)
                 .withFilter(filterFactory.createNoFunctionsFilter())
                 .withFilter(filterFactory.createNoOwnMessagesFilter())
-                .withFilter(filterFactory.createNoUrlsFilter());
+                .withFilter(filterFactory.createNoUrlsFilter())
+                .withFilter(filterFactory.createNoBotsFilter())
+                .withFilter(filterFactory.createIgnorableFilter());
 
         DiscordMessage<DiscordChannel> random = historyCache.getRandomChannelMessage(request);
         if (random != null) {

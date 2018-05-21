@@ -76,7 +76,9 @@ public class ReplaceHandler extends MessageHandler<DiscordChannel> {
         log.info("Handling replace: channel={}, message={}", message.getRecipient(), message.getContent());
         HistoryRequest<DiscordChannel> request = HistoryRequest.create(channel, message)
                 .withFilter(filterFactory.createNoFunctionsFilter())
-                .withFilter(filterFactory.createNoOwnMessagesFilter());
+                .withFilter(filterFactory.createNoOwnMessagesFilter())
+                .withFilter(filterFactory.createNoBotsFilter())
+                .withFilter(filterFactory.createIgnorableFilter());
         List<DiscordMessage<DiscordChannel>> messages = historyCache.getChannelHistory(request);
         log.info("Retrieved {} messages in channel history", messages.size());
         String result = tryStringReplace(messages, message.getContent());

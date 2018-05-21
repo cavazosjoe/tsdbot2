@@ -34,6 +34,18 @@ public class AwsConfig {
     @NotNull
     private String tsdtvCommercialsBucket;
 
+    @NotEmpty
+    @NotNull
+    private String configBucket;
+
+    public String getConfigBucket() {
+        return configBucket;
+    }
+
+    public void setConfigBucket(String configBucket) {
+        this.configBucket = configBucket;
+    }
+
     public String getTsdtvCommercialsBucket() {
         return tsdtvCommercialsBucket;
     }

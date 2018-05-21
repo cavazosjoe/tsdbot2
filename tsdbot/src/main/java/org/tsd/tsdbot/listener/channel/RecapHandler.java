@@ -80,6 +80,8 @@ public class RecapHandler extends MessageHandler<DiscordChannel> {
                 .withFilter(filterFactory.createLengthFilter(2, 80))
                 .withFilter(filterFactory.createNoUrlsFilter())
                 .withFilter(filterFactory.createNoOwnMessagesFilter())
+                .withFilter(filterFactory.createNoBotsFilter())
+                .withFilter(filterFactory.createIgnorableFilter())
                 .withLimit(MESSAGE_HISTORY_COUNT);
 
         List<DiscordMessage<DiscordChannel>> messages = historyCache.getChannelHistory(request);

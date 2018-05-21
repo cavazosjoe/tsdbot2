@@ -162,9 +162,11 @@ public class HistoryCache extends MessageFilter {
 
         boolean isFunction = channelMessageHandlers.stream()
                 .anyMatch(handler -> handler.isValid(discordMessage));
+
         if (isFunction) {
             discordMessage.setType(MessageType.FUNCTION);
         }
+
         return discordMessage;
     }
 
@@ -206,9 +208,11 @@ public class HistoryCache extends MessageFilter {
 
         boolean isFunction = userMessageHandlers.stream()
                 .anyMatch(handler -> handler.isValid(discordMessage));
+
         if (isFunction) {
             discordMessage.setType(MessageType.FUNCTION);
         }
+
         return discordMessage;
     }
 

@@ -7,4 +7,6 @@ public interface FilterFactory {
     NoFunctionsFilter createNoFunctionsFilter();
     NoOwnMessagesFilter createNoOwnMessagesFilter();
     NoUrlsFilter createNoUrlsFilter();
+    NoBotsFilter createNoBotsFilter();
+    IgnorableFilter createIgnorableFilter();
 }

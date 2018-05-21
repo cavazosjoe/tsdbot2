@@ -32,14 +32,17 @@ import org.tsd.tsdbot.app.module.*;
 import org.tsd.tsdbot.async.ChannelThreadFactory;
 import org.tsd.tsdbot.auth.*;
 import org.tsd.tsdbot.discord.DiscordChannel;
+import org.tsd.tsdbot.discord.DiscordUser;
 import org.tsd.tsdbot.filename.FilenameLibrary;
 import org.tsd.tsdbot.filename.S3FilenameLibrary;
 import org.tsd.tsdbot.history.HistoryCache;
+import org.tsd.tsdbot.history.RemoteConfiguration;
 import org.tsd.tsdbot.history.filter.FilterFactory;
 import org.tsd.tsdbot.listener.CreateMessageListener;
 import org.tsd.tsdbot.listener.MessageFilter;
 import org.tsd.tsdbot.listener.MessageHandler;
 import org.tsd.tsdbot.listener.channel.*;
+import org.tsd.tsdbot.listener.user.ConfigReloadHandler;
 import org.tsd.tsdbot.odb.OdbItem;
 import org.tsd.tsdbot.printout.PrintoutLibrary;
 import org.tsd.tsdbot.resources.*;
@@ -118,6 +121,7 @@ public class TSDBotApplication extends Application<TSDBotConfiguration> {
                 bind(PrintoutLibrary.class);
                 bind(AgentRegistry.class);
                 bind(TSDTVLibrary.class);
+                bind(RemoteConfiguration.class);
 
                 install(new FactoryModuleBuilder().build(ChannelThreadFactory.class));
                 install(new FactoryModuleBuilder().build(FilterFactory.class));
@@ -144,8 +148,10 @@ public class TSDBotApplication extends Application<TSDBotConfiguration> {
                 injector.getInstance(TSDTVHandler.class),
                 injector.getInstance(MorningHandler.class),
                 injector.getInstance(NewsHandler.class),
-                injector.getInstance(RecapHandler.class)
-        );
+                injector.getInstance(RecapHandler.class));
+
+        List<MessageHandler<DiscordUser>> userMessageHandlers = Arrays.asList(
+                injector.getInstance(ConfigReloadHandler.class));
 
 //        List<MessageFilter> messageFilters = Arrays.asList(
 //                injector.getInstance(HustleFilter.class));
@@ -154,6 +160,11 @@ public class TSDBotApplication extends Application<TSDBotConfiguration> {
         for (MessageHandler<DiscordChannel> channelMessageHandler : channelMessageHandlers) {
             messageListener.addChannelHandler(channelMessageHandler);
             historyCache.addChannelMessageHandler(channelMessageHandler);
+        }
+
+        for (MessageHandler<DiscordUser> userMessageHandler : userMessageHandlers) {
+            messageListener.addUserHandler(userMessageHandler);
+            historyCache.addUserMessageHandler(userMessageHandler);
         }
 
         for (MessageFilter messageFilter : messageFilters) {

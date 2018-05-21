@@ -32,19 +32,16 @@ public class TSDTVScheduler {
 
     private static final String SCHEDULE_FILE = "tsdtvSchedule.json";
 
-    private final TSDTV tsdtv;
     private final Scheduler scheduler;
     private final AmazonS3 s3Client;
     private final String tsdtvBucket;
     private final ObjectMapper objectMapper;
 
     @Inject
-    public TSDTVScheduler(TSDTV tsdtv,
-                          AmazonS3 s3Client,
+    public TSDTVScheduler(AmazonS3 s3Client,
                           ObjectMapper objectMapper,
                           Scheduler scheduler,
                           @Named(Constants.Annotations.S3_TSDTV_BUCKET) String tsdtvBucket) {
-        this.tsdtv = tsdtv;
         this.s3Client = s3Client;
         this.tsdtvBucket = tsdtvBucket;
         this.objectMapper = objectMapper;

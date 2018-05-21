@@ -23,6 +23,7 @@ public class Constants {
         public static final String BITLY_USER = "bitlyUser";
         public static final String BITLY_API_KEY = "bitlyApiKey";
 
+        public static final String S3_TSDBOT_CONFIG_BUCKET = "tsdbotConfigBucket";
         public static final String S3_FILENAMES_BUCKET = "filenamesBucket";
         public static final String S3_RANDOM_FILENAMES_BUCKET = "randomFilenamesBucket";
         public static final String S3_TSDTV_BUCKET = "tsdtvBucket";

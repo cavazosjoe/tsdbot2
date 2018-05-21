@@ -128,7 +128,9 @@ public class DorjThread extends ChannelThread {
                 HistoryRequest<DiscordChannel> request = HistoryRequest.create(channel, null)
                         .withFilter(filterFactory.createLengthFilter(1, 140))
                         .withFilter(filterFactory.createNoFunctionsFilter())
-                        .withFilter(filterFactory.createNoOwnMessagesFilter());
+                        .withFilter(filterFactory.createNoOwnMessagesFilter())
+                        .withFilter(filterFactory.createNoBotsFilter())
+                        .withFilter(filterFactory.createIgnorableFilter());
                 DiscordMessage<DiscordChannel> randomMessage = historyCache.getRandomChannelMessage(request);
                 if (randomMessage != null) {
                     Status tweet = sendDeejTweet(randomMessage.getContent());
