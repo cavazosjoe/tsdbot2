@@ -50,13 +50,16 @@ public class HistoryCache extends MessageFilter {
     private final List<MessageHandler<DiscordUser>> userMessageHandlers = new LinkedList<>();
 
     private final boolean initializeUsers;
+    private final RemoteConfigurationRepository remoteConfigurationRepository;
 
     @Inject
-    public HistoryCache(DiscordAPI api) {
+    public HistoryCache(DiscordAPI api, RemoteConfigurationRepository remoteConfigurationRepository) {
         super(api);
 
         String initializeUsersEnv = System.getProperty("initializeUsers");
         initializeUsers = StringUtils.isBlank(initializeUsersEnv) || Boolean.parseBoolean(initializeUsersEnv);
+
+        this.remoteConfigurationRepository = remoteConfigurationRepository;
     }
 
     @Override
@@ -150,6 +153,11 @@ public class HistoryCache extends MessageFilter {
     private DiscordMessage<DiscordChannel> wrapChannelMessage(Message message) {
         DiscordMessage<DiscordChannel> discordMessage = new DiscordMessage<>(message);
 
+        if (remoteConfigurationRepository.isMessageFromBlacklistedUser(discordMessage)) {
+            markMessage(discordMessage, MessageType.BLACKLISTED);
+            return discordMessage;
+        }
+
         messageFilters.stream()
                 .filter(MessageFilter::isHistorical)
                 .forEach(filter -> {
@@ -195,6 +203,11 @@ public class HistoryCache extends MessageFilter {
 
     private DiscordMessage<DiscordUser> wrapUserMessage(Message message) {
         DiscordMessage<DiscordUser> discordMessage = new DiscordMessage<>(message);
+
+        if (remoteConfigurationRepository.isMessageFromBlacklistedUser(discordMessage)) {
+            markMessage(discordMessage, MessageType.BLACKLISTED);
+            return discordMessage;
+        }
 
         messageFilters.stream()
                 .filter(MessageFilter::isHistorical)
