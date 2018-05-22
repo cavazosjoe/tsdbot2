@@ -7,21 +7,21 @@ import org.apache.commons.lang3.StringUtils;
 import org.tsd.Constants;
 import org.tsd.tsdbot.discord.DiscordMessage;
 import org.tsd.tsdbot.discord.DiscordUser;
-import org.tsd.tsdbot.history.RemoteConfiguration;
+import org.tsd.tsdbot.history.RemoteConfigurationRepository;
 import org.tsd.tsdbot.listener.MessageHandler;
 
 public class ConfigReloadHandler extends MessageHandler<DiscordUser> {
 
     private final DiscordUser owner;
-    private final RemoteConfiguration remoteConfiguration;
+    private final RemoteConfigurationRepository remoteConfigurationRepository;
 
     @Inject
     public ConfigReloadHandler(DiscordAPI api,
-                               RemoteConfiguration remoteConfiguration,
+                               RemoteConfigurationRepository remoteConfigurationRepository,
                                @Named(Constants.Annotations.OWNER) DiscordUser owner) {
         super(api);
         this.owner = owner;
-        this.remoteConfiguration = remoteConfiguration;
+        this.remoteConfigurationRepository = remoteConfigurationRepository;
     }
 
     @Override
@@ -32,7 +32,7 @@ public class ConfigReloadHandler extends MessageHandler<DiscordUser> {
 
     @Override
     public void doHandle(DiscordMessage<DiscordUser> message, DiscordUser recipient) throws Exception {
-        remoteConfiguration.load();
+        remoteConfigurationRepository.load();
         message.getAuthor().sendMessage("Successfully reloaded configuration settings");
     }
 }

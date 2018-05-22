@@ -1,9 +1,6 @@
 package org.tsd.tsdbot.history;
 
-import org.tsd.tsdbot.discord.DiscordChannel;
-import org.tsd.tsdbot.discord.DiscordMessage;
-import org.tsd.tsdbot.discord.DiscordUser;
-import org.tsd.tsdbot.discord.MessageRecipient;
+import org.tsd.tsdbot.discord.*;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -40,7 +37,8 @@ public class HistoryRequest<T extends MessageRecipient> {
     public List<DiscordMessage<T>> apply(History<T> history) {
         Stream<DiscordMessage<T>> stream = history.getMessages()
                 .stream()
-                .filter(msg -> !Objects.equals(msg, exclude));
+                .filter(msg -> !Objects.equals(msg, exclude))
+                .filter(msg -> !msg.getType().equals(MessageType.BLACKLISTED));
 
         for (Predicate<DiscordMessage> filter : filters) {
             stream = stream.filter(filter);

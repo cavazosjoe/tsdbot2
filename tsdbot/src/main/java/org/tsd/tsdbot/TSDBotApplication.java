@@ -36,7 +36,7 @@ import org.tsd.tsdbot.discord.DiscordUser;
 import org.tsd.tsdbot.filename.FilenameLibrary;
 import org.tsd.tsdbot.filename.S3FilenameLibrary;
 import org.tsd.tsdbot.history.HistoryCache;
-import org.tsd.tsdbot.history.RemoteConfiguration;
+import org.tsd.tsdbot.history.RemoteConfigurationRepository;
 import org.tsd.tsdbot.history.filter.FilterFactory;
 import org.tsd.tsdbot.listener.CreateMessageListener;
 import org.tsd.tsdbot.listener.MessageFilter;
@@ -103,7 +103,6 @@ public class TSDBotApplication extends Application<TSDBotConfiguration> {
         Injector injector = Guice.createInjector(new AbstractModule() {
             @Override
             protected void configure() {
-
                 install(new UtilityModule());
                 install(new DiscordModule(api, configuration));
                 install(new HibernateModule(hibernate));
@@ -121,7 +120,7 @@ public class TSDBotApplication extends Application<TSDBotConfiguration> {
                 bind(PrintoutLibrary.class);
                 bind(AgentRegistry.class);
                 bind(TSDTVLibrary.class);
-                bind(RemoteConfiguration.class);
+                bind(RemoteConfigurationRepository.class);
 
                 install(new FactoryModuleBuilder().build(ChannelThreadFactory.class));
                 install(new FactoryModuleBuilder().build(FilterFactory.class));
@@ -148,7 +147,8 @@ public class TSDBotApplication extends Application<TSDBotConfiguration> {
                 injector.getInstance(TSDTVHandler.class),
                 injector.getInstance(MorningHandler.class),
                 injector.getInstance(NewsHandler.class),
-                injector.getInstance(RecapHandler.class));
+                injector.getInstance(RecapHandler.class),
+                injector.getInstance(BlacklistHandler.class));
 
         List<MessageHandler<DiscordUser>> userMessageHandlers = Arrays.asList(
                 injector.getInstance(ConfigReloadHandler.class));

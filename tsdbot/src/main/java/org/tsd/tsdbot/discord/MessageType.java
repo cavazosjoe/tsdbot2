@@ -4,5 +4,5 @@ public enum MessageType {
     SELF,
     FUNCTION,
     NORMAL,
-    IGNORED;
+    BLACKLISTED;
 }

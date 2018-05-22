@@ -3,6 +3,7 @@ package org.tsd.tsdbot.listener;
 import de.btobastian.javacord.DiscordAPI;
 import de.btobastian.javacord.entities.message.Message;
 import de.btobastian.javacord.listener.message.MessageCreateListener;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tsd.tsdbot.app.Stage;
@@ -11,6 +12,7 @@ import org.tsd.tsdbot.discord.DiscordMessage;
 import org.tsd.tsdbot.discord.DiscordUser;
 import org.tsd.tsdbot.discord.MessageType;
 import org.tsd.tsdbot.history.HistoryCache;
+import org.tsd.tsdbot.history.RemoteConfigurationRepository;
 
 import javax.inject.Inject;
 import java.util.Collections;
@@ -23,6 +25,7 @@ public class CreateMessageListener implements MessageCreateListener {
 
     private final Stage stage;
     private final HistoryCache historyCache;
+    private final RemoteConfigurationRepository remoteConfigurationRepository;
 
     private final List<MessageFilter> messageFilters
             = Collections.synchronizedList(new LinkedList<>());
@@ -34,9 +37,12 @@ public class CreateMessageListener implements MessageCreateListener {
             = Collections.synchronizedList(new LinkedList<>());
 
     @Inject
-    public CreateMessageListener(HistoryCache historyCache, Stage stage) {
+    public CreateMessageListener(HistoryCache historyCache,
+                                 Stage stage,
+                                 RemoteConfigurationRepository remoteConfigurationRepository) {
         this.historyCache = historyCache;
         this.stage = stage;
+        this.remoteConfigurationRepository = remoteConfigurationRepository;
     }
 
     public void addFilter(MessageFilter filter) {
@@ -51,11 +57,18 @@ public class CreateMessageListener implements MessageCreateListener {
         this.userMessageHandlers.add(handler);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void onMessageCreate(DiscordAPI discordAPI, Message apiMessage) {
 
         boolean isChannelMessage = apiMessage.getChannelReceiver() != null;
         DiscordMessage<?> discordMessage = new DiscordMessage<>(apiMessage);
+
+        if (remoteConfigurationRepository.isMessageFromBlacklistedUser(discordMessage)) {
+            log.debug("Detected message from blacklisted user: ({})", discordMessage.getAuthor());
+            historyCache.markMessage(discordMessage, MessageType.BLACKLISTED);
+            return;
+        }
 
         for (MessageFilter filter : messageFilters) {
             try {
@@ -97,6 +110,6 @@ public class CreateMessageListener implements MessageCreateListener {
 
     private boolean isValidForStage(DiscordMessage<DiscordChannel> channelDiscordMessage) {
         return stage.equals(Stage.prod)
-                || channelDiscordMessage.getRecipient().getName().equalsIgnoreCase("tsdbot");
+                || StringUtils.equalsIgnoreCase(channelDiscordMessage.getRecipient().getName(), "tsdbot");
     }
 }

@@ -17,11 +17,9 @@ class History<T extends MessageRecipient> {
     private static final Logger log = LoggerFactory.getLogger(History.class);
 
     private CircularFifoQueue<DiscordMessage<T>> buffer = new CircularFifoQueue<>(Constants.History.DEFAULT_HISTORY_LENGTH);
-    private String lastMessageId = null;
 
     void addMessage(DiscordMessage<T> message) {
         this.buffer.add(message);
-        this.lastMessageId = message.getId();
     }
 
     List<DiscordMessage<T>> getMessages() {
