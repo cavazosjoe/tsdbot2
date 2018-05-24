@@ -148,7 +148,8 @@ public class TSDBotApplication extends Application<TSDBotConfiguration> {
                 injector.getInstance(MorningHandler.class),
                 injector.getInstance(NewsHandler.class),
                 injector.getInstance(RecapHandler.class),
-                injector.getInstance(BlacklistHandler.class));
+                injector.getInstance(BlacklistHandler.class),
+                injector.getInstance(MemeHandler.class));
 
         List<MessageHandler<DiscordUser>> userMessageHandlers = Arrays.asList(
                 injector.getInstance(ConfigReloadHandler.class));

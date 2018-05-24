@@ -1,6 +1,7 @@
 package org.tsd.tsdbot.history;
 
 import org.tsd.tsdbot.discord.*;
+import org.tsd.tsdbot.history.filter.MessageHistoryFilter;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -27,6 +28,11 @@ public class HistoryRequest<T extends MessageRecipient> {
 
     public HistoryRequest<T> withFilter(Predicate<DiscordMessage> filter) {
         this.filters.add(filter);
+        return this;
+    }
+
+    public HistoryRequest<T> withFilters(List<MessageHistoryFilter> filters) {
+        this.filters.addAll(filters);
         return this;
     }
 

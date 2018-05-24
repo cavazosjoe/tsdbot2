@@ -11,6 +11,7 @@ import org.tsd.tsdbot.discord.DiscordMessage;
 import org.tsd.tsdbot.history.HistoryCache;
 import org.tsd.tsdbot.history.HistoryRequest;
 import org.tsd.tsdbot.history.filter.FilterFactory;
+import org.tsd.tsdbot.history.filter.StandardMessageFilters;
 import org.tsd.tsdbot.listener.MessageHandler;
 import org.tsd.tsdbot.util.MiscUtils;
 
@@ -20,14 +21,17 @@ public class GvHandler extends MessageHandler<DiscordChannel> {
 
     private final HistoryCache historyCache;
     private final FilterFactory filterFactory;
+    private final StandardMessageFilters standardMessageFilters;
 
     @Inject
     public GvHandler(DiscordAPI api,
                      HistoryCache historyCache,
-                     FilterFactory filterFactory) {
+                     FilterFactory filterFactory,
+                     StandardMessageFilters standardMessageFilters) {
         super(api);
         this.historyCache = historyCache;
         this.filterFactory = filterFactory;
+        this.standardMessageFilters = standardMessageFilters;
     }
 
     @Override
@@ -41,11 +45,7 @@ public class GvHandler extends MessageHandler<DiscordChannel> {
                 channel.getName(), message.getContent());
 
         HistoryRequest<DiscordChannel> request = HistoryRequest.create(channel, message)
-                .withFilter(filterFactory.createNoFunctionsFilter())
-                .withFilter(filterFactory.createNoOwnMessagesFilter())
-                .withFilter(filterFactory.createNoUrlsFilter())
-                .withFilter(filterFactory.createNoBotsFilter())
-                .withFilter(filterFactory.createIgnorableFilter());
+                .withFilters(standardMessageFilters.getStandardFilters());
 
         DiscordMessage<DiscordChannel> random = historyCache.getRandomChannelMessage(request);
         if (random != null) {

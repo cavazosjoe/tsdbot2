@@ -11,6 +11,7 @@ import org.tsd.tsdbot.discord.DiscordUser;
 import org.tsd.tsdbot.history.HistoryCache;
 import org.tsd.tsdbot.history.HistoryRequest;
 import org.tsd.tsdbot.history.filter.FilterFactory;
+import org.tsd.tsdbot.history.filter.StandardMessageFilters;
 import org.tsd.tsdbot.listener.MessageHandler;
 import org.tsd.tsdbot.util.MiscUtils;
 
@@ -40,6 +41,7 @@ public class RecapHandler extends MessageHandler<DiscordChannel> {
     private final FilterFactory filterFactory;
     private final Random random;
     private final Clock clock;
+    private final StandardMessageFilters standardMessageFilters;
 
     private final Map<String, Instant> recapUsageMap = new ConcurrentHashMap<>();
 
@@ -47,6 +49,7 @@ public class RecapHandler extends MessageHandler<DiscordChannel> {
     public RecapHandler(DiscordAPI api,
                         HistoryCache historyCache,
                         FilterFactory filterFactory,
+                        StandardMessageFilters standardMessageFilters,
                         Random random,
                         Clock clock) {
         super(api);
@@ -54,6 +57,7 @@ public class RecapHandler extends MessageHandler<DiscordChannel> {
         this.filterFactory = filterFactory;
         this.random = random;
         this.clock = clock;
+        this.standardMessageFilters = standardMessageFilters;
     }
 
     @Override
@@ -76,12 +80,8 @@ public class RecapHandler extends MessageHandler<DiscordChannel> {
         }
 
         HistoryRequest<DiscordChannel> request = HistoryRequest.create(channel, message)
-                .withFilter(filterFactory.createNoFunctionsFilter())
                 .withFilter(filterFactory.createLengthFilter(2, 80))
-                .withFilter(filterFactory.createNoUrlsFilter())
-                .withFilter(filterFactory.createNoOwnMessagesFilter())
-                .withFilter(filterFactory.createNoBotsFilter())
-                .withFilter(filterFactory.createIgnorableFilter())
+                .withFilters(standardMessageFilters.getStandardFilters())
                 .withLimit(MESSAGE_HISTORY_COUNT);
 
         List<DiscordMessage<DiscordChannel>> messages = historyCache.getChannelHistory(request);

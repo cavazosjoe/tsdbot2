@@ -154,7 +154,7 @@ public class HistoryCache extends MessageFilter {
         DiscordMessage<DiscordChannel> discordMessage = new DiscordMessage<>(message);
 
         if (remoteConfigurationRepository.isMessageFromBlacklistedUser(discordMessage)) {
-            markMessage(discordMessage, MessageType.BLACKLISTED);
+            discordMessage.setType(MessageType.BLACKLISTED);
             return discordMessage;
         }
 
@@ -164,7 +164,7 @@ public class HistoryCache extends MessageFilter {
                     try {
                         filter.filter(discordMessage);
                     } catch (MessageFilterException e) {
-                        log.error("Error filtering channel message during wrapping: " + message, e);
+                        log.error("Error filtering channel message during wrapping, filter="+filter.getClass()+": " + message, e);
                     }
                 });
 
@@ -215,7 +215,7 @@ public class HistoryCache extends MessageFilter {
                     try {
                         filter.filter(discordMessage);
                     } catch (MessageFilterException e) {
-                        log.error("Error filtering user message during wrapping: " + message, e);
+                        log.error("Error filtering user message during wrapping, filter="+filter.getClass()+": " + message, e);
                     }
                 });
 
@@ -258,7 +258,7 @@ public class HistoryCache extends MessageFilter {
                 }
             }
         } catch (Exception e) {
-            log.error("Error filtering message: {}", message);
+            log.error("Error filtering message: "+message, e);
             throw new MessageFilterException();
         }
     }
