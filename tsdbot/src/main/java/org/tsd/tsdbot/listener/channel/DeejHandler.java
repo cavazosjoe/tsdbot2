@@ -10,7 +10,6 @@ import org.tsd.tsdbot.discord.DiscordChannel;
 import org.tsd.tsdbot.discord.DiscordMessage;
 import org.tsd.tsdbot.history.HistoryCache;
 import org.tsd.tsdbot.history.HistoryRequest;
-import org.tsd.tsdbot.history.filter.FilterFactory;
 import org.tsd.tsdbot.history.filter.StandardMessageFilters;
 import org.tsd.tsdbot.listener.MessageHandler;
 import org.tsd.tsdbot.util.MiscUtils;
@@ -20,17 +19,14 @@ public class DeejHandler extends MessageHandler<DiscordChannel> {
     private static final Logger log = LoggerFactory.getLogger(DeejHandler.class);
 
     private final HistoryCache historyCache;
-    private final FilterFactory filterFactory;
     private final StandardMessageFilters standardMessageFilters;
 
     @Inject
     public DeejHandler(DiscordAPI api,
                        HistoryCache historyCache,
-                       FilterFactory filterFactory,
                        StandardMessageFilters standardMessageFilters) {
         super(api);
         this.historyCache = historyCache;
-        this.filterFactory = filterFactory;
         this.standardMessageFilters = standardMessageFilters;
     }
 
