@@ -43,6 +43,8 @@ import org.tsd.tsdbot.listener.MessageFilter;
 import org.tsd.tsdbot.listener.MessageHandler;
 import org.tsd.tsdbot.listener.channel.*;
 import org.tsd.tsdbot.listener.user.ConfigReloadHandler;
+import org.tsd.tsdbot.meme.MemeRepository;
+import org.tsd.tsdbot.meme.S3MemeRepository;
 import org.tsd.tsdbot.odb.OdbItem;
 import org.tsd.tsdbot.printout.PrintoutLibrary;
 import org.tsd.tsdbot.resources.*;
@@ -116,6 +118,9 @@ public class TSDBotApplication extends Application<TSDBotConfiguration> {
 
                 bind(FilenameLibrary.class)
                         .to(S3FilenameLibrary.class);
+
+                bind(MemeRepository.class)
+                        .to(S3MemeRepository.class);
 
                 bind(PrintoutLibrary.class);
                 bind(AgentRegistry.class);
@@ -221,6 +226,7 @@ public class TSDBotApplication extends Application<TSDBotConfiguration> {
         environment.jersey().register(injector.getInstance(TSDTVAgentResource.class));
         environment.jersey().register(injector.getInstance(LoggingResource.class));
         environment.jersey().register(injector.getInstance(TSDTVReleaseResource.class));
+        environment.jersey().register(injector.getInstance(MemeResource.class));
     }
 
     private static void configureQuartz(Injector injector) {

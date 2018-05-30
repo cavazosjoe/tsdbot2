@@ -38,6 +38,10 @@ public class S3Module extends AbstractModule {
                 .toInstance(configuration.getAws().getFilenamesBucket());
 
         bind(String.class)
+                .annotatedWith(Names.named(Constants.Annotations.S3_MEMES_BUCKET))
+                .toInstance(configuration.getAws().getMemesBucket());
+
+        bind(String.class)
                 .annotatedWith(Names.named(Constants.Annotations.S3_RANDOM_FILENAMES_BUCKET))
                 .toInstance(configuration.getAws().getRandomFilenamesBucket());
 

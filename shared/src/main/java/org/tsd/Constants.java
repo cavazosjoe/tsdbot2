@@ -25,6 +25,7 @@ public class Constants {
 
         public static final String S3_TSDBOT_CONFIG_BUCKET = "tsdbotConfigBucket";
         public static final String S3_FILENAMES_BUCKET = "filenamesBucket";
+        public static final String S3_MEMES_BUCKET = "memesBucket";
         public static final String S3_RANDOM_FILENAMES_BUCKET = "randomFilenamesBucket";
         public static final String S3_TSDTV_BUCKET = "tsdtvBucket";
         public static final String S3_TSDTV_IMAGES_BUCKET = "tsdtvImagesBucket";

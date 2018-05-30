@@ -20,6 +20,10 @@ public class AwsConfig {
 
     @NotEmpty
     @NotNull
+    private String memesBucket;
+
+    @NotEmpty
+    @NotNull
     private String randomFilenamesBucket;
 
     @NotEmpty
@@ -37,6 +41,14 @@ public class AwsConfig {
     @NotEmpty
     @NotNull
     private String configBucket;
+
+    public String getMemesBucket() {
+        return memesBucket;
+    }
+
+    public void setMemesBucket(String memesBucket) {
+        this.memesBucket = memesBucket;
+    }
 
     public String getConfigBucket() {
         return configBucket;

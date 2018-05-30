@@ -40,7 +40,9 @@ public class MemegenClient implements Serializable {
     private static final String SCHEME = HttpScheme.HTTPS.asString();
     private static final String HOST = "memegen.link";
     private static final String TEMPLATES_PATH = "api/templates";
+    private static final String CUSTOM_IMAGE_PATH = "custom";
 
+    private static final String IMG_PARAM_NAME = "alt";
     private static final String FONT_PARAM_NAME = "font";
     private static final String FONT_IMPACT = "impact";
 
@@ -88,21 +90,49 @@ public class MemegenClient implements Serializable {
         return templateNames;
     }
 
-    public String generateMemeUrl(String templateName, String text1, String text2) throws URISyntaxException {
+    public String generateMemeUrlFromTemplate(String templateName, String text1, String text2) throws URISyntaxException {
         try {
             String encoded1 = encodeString(text1);
             String encoded2 = encodeString(text2);
+
             log.info("Generating memegen URI, template={}\ntext1={}\nencoded1={}\ntext2={}\nencoded2={}",
                     templateName, text1, encoded1, text2, encoded2);
-            return new URIBuilder()
+
+            URIBuilder uriBuilder = new URIBuilder()
                     .setScheme(SCHEME)
                     .setHost(HOST)
                     .setPath(templateName + "/" + encoded1 + "/" + encoded2 + ".jpg")
-                    .setParameter(FONT_PARAM_NAME, FONT_IMPACT)
-                    .build().toString();
+                    .setParameter(FONT_PARAM_NAME, FONT_IMPACT);
+
+            return uriBuilder.build().toString();
+
         } catch (URISyntaxException e) {
             log.error("Failed to build memegen URI, template={}\ntext1={}\ntext2={}",
                     templateName, text1, text2);
+            throw e;
+        }
+    }
+
+    public String generateMemeUrlFromAltImage(String imageUrl, String text1, String text2) throws URISyntaxException {
+        try {
+            String encoded1 = encodeString(text1);
+            String encoded2 = encodeString(text2);
+
+            log.info("Generating memegen URI, imageUrl={}\ntext1={}\nencoded1={}\ntext2={}\nencoded2={}",
+                    imageUrl, text1, encoded1, text2, encoded2);
+
+            URIBuilder uriBuilder = new URIBuilder()
+                    .setScheme(SCHEME)
+                    .setHost(HOST)
+                    .setPath(CUSTOM_IMAGE_PATH + "/" + encoded1 + "/" + encoded2 + ".jpg")
+                    .setParameter(FONT_PARAM_NAME, FONT_IMPACT)
+                    .setParameter(IMG_PARAM_NAME, imageUrl);
+
+            return uriBuilder.build().toString();
+
+        } catch (URISyntaxException e) {
+            log.error("Failed to build memegen URI, imageUrl={}\ntext1={}\ntext2={}",
+                    imageUrl, text1, text2);
             throw e;
         }
     }
