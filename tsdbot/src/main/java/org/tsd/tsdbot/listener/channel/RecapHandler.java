@@ -13,6 +13,7 @@ import org.tsd.tsdbot.history.HistoryRequest;
 import org.tsd.tsdbot.history.filter.FilterFactory;
 import org.tsd.tsdbot.history.filter.StandardMessageFilters;
 import org.tsd.tsdbot.listener.MessageHandler;
+import org.tsd.tsdbot.util.MessageSanitizer;
 import org.tsd.tsdbot.util.MiscUtils;
 
 import javax.inject.Inject;
@@ -42,6 +43,7 @@ public class RecapHandler extends MessageHandler<DiscordChannel> {
     private final Random random;
     private final Clock clock;
     private final StandardMessageFilters standardMessageFilters;
+    private final MessageSanitizer messageSanitizer;
 
     private final Map<String, Instant> recapUsageMap = new ConcurrentHashMap<>();
 
@@ -51,12 +53,14 @@ public class RecapHandler extends MessageHandler<DiscordChannel> {
                         FilterFactory filterFactory,
                         StandardMessageFilters standardMessageFilters,
                         Random random,
+                        MessageSanitizer messageSanitizer,
                         Clock clock) {
         super(api);
         this.historyCache = historyCache;
         this.filterFactory = filterFactory;
         this.random = random;
         this.clock = clock;
+        this.messageSanitizer = messageSanitizer;
         this.standardMessageFilters = standardMessageFilters;
     }
 
@@ -105,7 +109,7 @@ public class RecapHandler extends MessageHandler<DiscordChannel> {
                 DiscordMessage<DiscordChannel> evaluatingMessage = messages.get(i);
 
                 // if this is the last message, end with ellipses-style drama
-                String originalText = MiscUtils.getSanitizedContent(evaluatingMessage);
+                String originalText = messageSanitizer.sanitize(evaluatingMessage.getContent());
                 String dramaticText = (i < messages.size()-1) ?
                         DramaStyle.getRandomDrama(originalText, random) : DramaStyle.ellipses.apply(originalText);
 

@@ -19,8 +19,7 @@ import org.tsd.tsdbot.history.filter.StandardMessageFilters;
 import org.tsd.tsdbot.listener.MessageHandler;
 import org.tsd.tsdbot.meme.MemeRepository;
 import org.tsd.tsdbot.meme.MemegenClient;
-import org.tsd.tsdbot.util.BitlyUtil;
-import org.tsd.tsdbot.util.MiscUtils;
+import org.tsd.tsdbot.util.MessageSanitizer;
 
 import java.net.URL;
 import java.util.Arrays;
@@ -36,11 +35,11 @@ public class MemeHandler extends MessageHandler<DiscordChannel> {
     private final FilterFactory filterFactory;
     private final StandardMessageFilters standardMessageFilters;
     private final MemegenClient memegenClient;
-    private final BitlyUtil bitlyUtil;
     private final FilenameLibrary filenameLibrary;
     private final Random random;
     private final URL botUrl;
     private final MemeRepository memeRepository;
+    private final MessageSanitizer messageSanitizer;
 
     @Inject
     public MemeHandler(DiscordAPI api,
@@ -49,16 +48,16 @@ public class MemeHandler extends MessageHandler<DiscordChannel> {
                        HistoryCache historyCache,
                        FilterFactory filterFactory,
                        StandardMessageFilters standardMessageFilters,
-                       BitlyUtil bitlyUtil,
                        FilenameLibrary filenameLibrary,
                        MemeRepository memeRepository,
+                       MessageSanitizer messageSanitizer,
                        @BotUrl URL botUrl) {
         super(api);
+        this.messageSanitizer = messageSanitizer;
         this.random = random;
         this.memegenClient = memegenClient;
         this.historyCache = historyCache;
         this.filterFactory = filterFactory;
-        this.bitlyUtil = bitlyUtil;
         this.standardMessageFilters = standardMessageFilters;
         this.filenameLibrary = filenameLibrary;
         this.botUrl = botUrl;
@@ -83,8 +82,7 @@ public class MemeHandler extends MessageHandler<DiscordChannel> {
             log.info("Creating meme from template: {}", template);
 
             MemeData memeData = new MemeData(recipient, message);
-            String memeUrl
-                    = bitlyUtil.shortenUrl(memegenClient.generateMemeUrlFromTemplate(template, memeData.getText1(), memeData.getText2()));
+            String memeUrl = memegenClient.generateMemeUrlFromTemplate(template, memeData.getText1(), memeData.getText2());
             log.info("Using meme template URL: {}", memeUrl);
 
             String tsdbotUrl = storeMemeAndGenerateTsdbotUrl(memeUrl);
@@ -98,10 +96,8 @@ public class MemeHandler extends MessageHandler<DiscordChannel> {
                     .build().toString();
             log.info("Creating meme from TSD filename: {}", filenameUrl);
 
-            String filenameUrlShort = bitlyUtil.shortenUrl(filenameUrl);
             MemeData memeData = new MemeData(recipient, message);
-            String memeUrl
-                    = bitlyUtil.shortenUrl(memegenClient.generateMemeUrlFromAltImage(filenameUrlShort, memeData.getText1(), memeData.getText2()));
+            String memeUrl = memegenClient.generateMemeUrlFromAltImage(filenameUrl, memeData.getText1(), memeData.getText2());
             log.info("Using TSD URL: {}", memeUrl);
 
             String tsdbotUrl = storeMemeAndGenerateTsdbotUrl(memeUrl);
@@ -143,11 +139,11 @@ public class MemeHandler extends MessageHandler<DiscordChannel> {
                     .withFilter(filterFactory.createLengthFilter(2, 150));
 
             while (StringUtils.isBlank(text1)) {
-                this.text1 = MiscUtils.getSanitizedContent(historyCache.getRandomChannelMessage(request));
+                this.text1 = messageSanitizer.sanitize(historyCache.getRandomChannelMessage(request).getContent());
             }
 
             while (StringUtils.isBlank(text2) || text2.equals(text1)) {
-                this.text2 = MiscUtils.getSanitizedContent(historyCache.getRandomChannelMessage(request));
+                this.text2 = messageSanitizer.sanitize(historyCache.getRandomChannelMessage(request).getContent());
             }
 
             this.flavorText = FLAVOR_TEXT.get(random.nextInt(FLAVOR_TEXT.size()));

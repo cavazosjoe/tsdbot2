@@ -10,6 +10,7 @@ import java.util.regex.Pattern;
 public class Constants {
 
     public static final String URL_REGEX = "\\b(https?|ftp|file)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]";
+    public static final String USER_BEEP_REGEX = "<@([\\d]+)>";
 
     public static final Charset UTF_8 = Charset.forName("UTF-8");
 

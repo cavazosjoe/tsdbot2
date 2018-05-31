@@ -58,29 +58,6 @@ public class MiscUtils {
         return result;
     }
 
-    public static String stripEmojisFromMessage(DiscordMessage<?> message) {
-        String stripped = StringUtils.replaceAll(message.getContent(), Constants.Emoji.CUSTOM_EMOJI_MENTION_REGEX, "");
-        return StringUtils.replaceAll(stripped, Constants.Emoji.STANDARD_EMOJI_REGEX, "");
-    }
-
-    public static String getSanitizedContent(DiscordMessage<?> message) {
-        String result = message.getContent();
-
-        // strip emojis
-        result = stripEmojisFromMessage(message);
-
-        // strip URLs
-        result = StringUtils.replaceAll(result, Constants.URL_REGEX, "");
-
-        // reduce to one space between words
-        result = StringUtils.replaceAll(result, "\\s+", " ");
-
-        // trim
-        result = StringUtils.trim(result);
-
-        return result;
-    }
-
     public static String bold(String input) {
         return StringUtils.isBlank(input) ? "" : "**"+StringUtils.trim(input)+"**";
     }

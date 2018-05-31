@@ -138,9 +138,11 @@ public class MemegenClient implements Serializable {
     }
 
     private static String encodeString(String input) {
+        String original = input;
         for (String[] replacement : REPLACEMENT_MAP) {
             input = StringUtils.replaceAll(input, replacement[0], replacement[1]);
         }
+        log.debug("Encoded string for memegen:\n{}\n{}", original, input);
         return input;
     }
 }
