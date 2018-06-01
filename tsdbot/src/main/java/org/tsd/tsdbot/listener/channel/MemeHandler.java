@@ -17,10 +17,14 @@ import org.tsd.tsdbot.history.HistoryRequest;
 import org.tsd.tsdbot.history.filter.FilterFactory;
 import org.tsd.tsdbot.history.filter.StandardMessageFilters;
 import org.tsd.tsdbot.listener.MessageHandler;
+import org.tsd.tsdbot.meme.MemeAlreadySavedException;
+import org.tsd.tsdbot.meme.MemeNotFoundException;
 import org.tsd.tsdbot.meme.MemeRepository;
 import org.tsd.tsdbot.meme.MemegenClient;
 import org.tsd.tsdbot.util.MessageSanitizer;
+import org.tsd.tsdbot.util.MiscUtils;
 
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -85,8 +89,10 @@ public class MemeHandler extends MessageHandler<DiscordChannel> {
             String memeUrl = memegenClient.generateMemeUrlFromTemplate(template, memeData.getText1(), memeData.getText2());
             log.info("Using meme template URL: {}", memeUrl);
 
-            String tsdbotUrl = storeMemeAndGenerateTsdbotUrl(memeUrl);
-            recipient.sendMessage(memeData.getFlavorText() + ": " + tsdbotUrl);
+            String memeId = memeRepository.storeMeme(memeUrl);
+            String tsdbotUrl = buildMemeUrl(memeId);
+
+            recipient.sendMessage(memeData.getFlavorText() + ": " + tsdbotUrl + " id = "+memeId);
 
         } else if (cmdParts.length > 1 && StringUtils.equalsIgnoreCase(cmdParts[1], "tsd")) {
             // use an image from the random filenames directory
@@ -100,16 +106,40 @@ public class MemeHandler extends MessageHandler<DiscordChannel> {
             String memeUrl = memegenClient.generateMemeUrlFromAltImage(filenameUrl, memeData.getText1(), memeData.getText2());
             log.info("Using TSD URL: {}", memeUrl);
 
-            String tsdbotUrl = storeMemeAndGenerateTsdbotUrl(memeUrl);
-            recipient.sendMessage(memeData.getFlavorText() + ": " + tsdbotUrl);
+            String memeId = memeRepository.storeMeme(memeUrl);
+            String tsdbotUrl = buildMemeUrl(memeId);
 
-        } else {
-            recipient.sendMessage("USAGE: .maymay [tsd]");
+            recipient.sendMessage(memeData.getFlavorText() + ": " + tsdbotUrl + " id = "+memeId);
+
+        } else if (cmdParts.length > 1 && StringUtils.equalsIgnoreCase(cmdParts[1], "hof")) {
+            // return a random meme from the HOF
+            String randomMemeId = memeRepository.getRandomSavedMeme();
+            if (StringUtils.isBlank(randomMemeId)) {
+                recipient.sendMessage("No saved memes available");
+            } else {
+                String url = buildMemeUrl(randomMemeId);
+                recipient.sendMessage(MiscUtils.getRandomItemInList(HOF_FLAVOR_TEXT)+": "+url);
+            }
+
+        } else if (cmdParts.length > 2 && StringUtils.equalsIgnoreCase(cmdParts[1], "save")) {
+            // save a meme
+            String id = cmdParts[2];
+            try {
+                String newKey = memeRepository.saveMeme(id);
+                String newUrl = buildMemeUrl(newKey);
+                recipient.sendMessage("Meme saved to HOF: "+newUrl);
+            } catch (MemeAlreadySavedException mase) {
+                recipient.sendMessage("Meme has already been saved: "+id);
+            } catch (MemeNotFoundException mnfe) {
+                recipient.sendMessage("Unable to save meme: "+mnfe.getMessage());
+            }
+
+        }  else {
+            recipient.sendMessage("USAGE: .maymay [tsd] [hof] [save {meme_id}]");
         }
     }
 
-    private String storeMemeAndGenerateTsdbotUrl(String memegenUrl) throws Exception {
-        String memeId = memeRepository.storeMeme(memegenUrl);
+    private String buildMemeUrl(String memeId) throws URISyntaxException {
         return new URIBuilder(botUrl.toURI())
                 .setPath("/memes/"+memeId)
                 .build().toString();
@@ -125,6 +155,12 @@ public class MemeHandler extends MessageHandler<DiscordChannel> {
             "Hit em with the good stuff",
             "A meme for the ages",
             "They said it couldn't be done"
+    );
+
+    private static final List<String> HOF_FLAVOR_TEXT = Arrays.asList(
+            "Only the finest",
+            "From the archives",
+            "The best"
     );
 
     private class MemeData {

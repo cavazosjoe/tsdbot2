@@ -163,6 +163,11 @@ public class Constants {
         public static final String COMMAND = ".hustle";
     }
 
+    public static class Meme {
+        public static final long MAX_AGE_DAYS = 30;
+        public static final String HALL_OF_FAME_PREFIX = "HOF_";
+    }
+
     public static class Morning {
         public static final String PREFIX = ".morning";
     }
