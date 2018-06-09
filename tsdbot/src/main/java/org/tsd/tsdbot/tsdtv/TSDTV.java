@@ -39,6 +39,8 @@ import org.tsd.util.RetryUtil;
 
 import java.net.URL;
 import java.time.Clock;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -66,6 +68,8 @@ public class TSDTV {
     private final String tsdtvStreamUrl;
     private final DiscordChannel channel;
     private final URL botUrl;
+
+    private final Map<String, TSDTVViewer> currentViewers = new HashMap<>();
 
     @Inject
     public TSDTV(TSDTVLibrary library,
@@ -100,17 +104,25 @@ public class TSDTV {
 
         log.warn("Starting QueueManagerThread...");
         new Thread(new QueueManagerThread()).start();
+
+        log.warn("Starting ViewerReaperThread...");
+        new Thread(new ViewerReaperThread()).start();
     }
 
     public Lineup getLineup() throws SchedulerException {
         Lineup lineup = new Lineup();
+
         if (nowPlaying != null) {
             lineup.setNowPlaying(nowPlaying);
         }
+
         if (queue != null) {
             lineup.getQueue().addAll(queue);
         }
+
+        lineup.setViewers(getViewerCount());
         lineup.getRemainingBlocks().addAll(getScheduledBlocks());
+
         log.debug("Built lineup: {}", lineup);
         return lineup;
     }
@@ -230,6 +242,18 @@ public class TSDTV {
         if (nowPlaying != null && nowPlaying.getMedia().getId() == mediaId) {
             this.nowPlaying = null;
         }
+    }
+
+    public synchronized void reportViewer(String ipAddress) {
+        if (!currentViewers.containsKey(ipAddress)) {
+            currentViewers.put(ipAddress, new TSDTVViewer(ipAddress, clock.instant()));
+        } else {
+            currentViewers.get(ipAddress).setLastRecorded(clock.instant());
+        }
+    }
+
+    public synchronized int getViewerCount() {
+        return currentViewers.size();
     }
 
     private void nowPlaying(QueuedItem queuedItem) throws TSDTVException {
@@ -541,6 +565,29 @@ public class TSDTV {
                 }
                 try {
                     Thread.sleep(TimeUnit.SECONDS.toMillis(2));
+                } catch (Exception e) {
+                    log.error("Interrupted");
+                    shutdown = true;
+                }
+            }
+        }
+    }
+
+    class ViewerReaperThread implements Runnable {
+        private boolean shutdown = false;
+
+        @Override
+        public void run() {
+            while (!shutdown) {
+                synchronized (currentViewers) {
+                    Instant cutoff = clock.instant().minus(30, ChronoUnit.SECONDS);
+                    currentViewers.entrySet()
+                            .removeIf(entry -> {
+                                return entry.getValue().getLastRecorded().isBefore(cutoff);
+                            });
+                }
+                try {
+                    Thread.sleep(TimeUnit.SECONDS.toMillis(30));
                 } catch (Exception e) {
                     log.error("Interrupted");
                     shutdown = true;

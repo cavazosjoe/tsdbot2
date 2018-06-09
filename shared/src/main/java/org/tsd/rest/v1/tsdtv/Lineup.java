@@ -7,9 +7,18 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class Lineup {
+    private int viewers;
     private QueuedItem nowPlaying;
     private List<QueuedItem> queue = new LinkedList<>();
     private List<ScheduledBlockSummary> remainingBlocks = new LinkedList<>();
+
+    public int getViewers() {
+        return viewers;
+    }
+
+    public void setViewers(int viewers) {
+        this.viewers = viewers;
+    }
 
     public QueuedItem getNowPlaying() {
         return nowPlaying;

@@ -42,11 +42,25 @@
             return '<img class="media-object tsdtvQueueImg" src="/tsdtv/img/'+queueItem.media.id+'"/>';
         };
 
+        /*
+        function guid() {
+            function s4() {
+                return Math.floor((1 + Math.random()) * 0x10000)
+                        .toString(16)
+                        .substring(1);
+            }
+            return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
+        }
+
+        var uuid = guid();
+        */
+
         (function refresh_now_playing() {
             $.get('/tsdtv/nowPlaying',{},function(responseJson) {
 
                 console.log("Received nowPlaying: " + JSON.stringify(responseJson));
 
+                var viewerCount = responseJson.viewers;
                 var nowPlaying = responseJson.nowPlaying;
 
                 var nowPlayingBody = '<em>Nothing Playing</em>';
@@ -61,7 +75,7 @@
                 var htmlString =
                     '<div class="panel panel-default">' +
                     '   <div class="panel-heading">' +
-                    '       <h3 class="panel-title" style="color: #00bc7e"><strong>NOW PLAYING</strong></h3>' +
+                    '       <h3 class="panel-title" style="color: #00bc7e"><strong>NOW PLAYING</strong> (Viewers: '+viewerCount+')</h3>' +
                     '   </div>' +
                     '   <div class="panel-body">' +
                     '       <div id="nowplaying">' +

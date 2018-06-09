@@ -76,8 +76,13 @@ public class TSDTVResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/nowPlaying")
-    public Response getNowPlaying() {
+    public Response getNowPlaying(@Context HttpServletRequest request) {
         try {
+            String requestIpAddress = request.getRemoteAddr();
+            if (StringUtils.isNotBlank(requestIpAddress)) {
+                log.debug("Received viewing notification: {}", requestIpAddress);
+                tsdtv.reportViewer(requestIpAddress);
+            }
             return Response.ok(tsdtv.getLineup()).build();
         } catch (Exception e) {
             log.error("Error building TSDTV lineup", e);
