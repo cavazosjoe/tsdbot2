@@ -1,5 +1,7 @@
 package org.tsd.rest.v1.tsdtv;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
 import java.io.File;
 
 public class Commercial extends Media {
@@ -30,5 +32,13 @@ public class Commercial extends Media {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this)
+                .append("name", name)
+                .append("file", file)
+                .toString();
     }
 }

@@ -37,6 +37,7 @@ public class Constants {
         public static final String GOOGLE_API_KEY = "googleApiKey";
         public static final String TSDTV_STREAM_URL = "tsdtvStreamUrl";
         public static final String TSDTV_CHANNEL = "tsdtvChannel";
+        public static final String TSDTV_SCHEDULE = "tsdtvSchedule";
     }
 
     public static class Auth {

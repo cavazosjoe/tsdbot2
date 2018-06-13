@@ -30,22 +30,23 @@ public class TSDTVScheduler {
 
     private static final Logger log = LoggerFactory.getLogger(TSDTVScheduler.class);
 
-    private static final String SCHEDULE_FILE = "tsdtvSchedule.json";
-
     private final Scheduler scheduler;
     private final AmazonS3 s3Client;
     private final String tsdtvBucket;
+    private final String scheduleFilename;
     private final ObjectMapper objectMapper;
 
     @Inject
     public TSDTVScheduler(AmazonS3 s3Client,
                           ObjectMapper objectMapper,
                           Scheduler scheduler,
-                          @Named(Constants.Annotations.S3_TSDTV_BUCKET) String tsdtvBucket) {
+                          @Named(Constants.Annotations.S3_TSDTV_BUCKET) String tsdtvBucket,
+                          @Named(Constants.Annotations.TSDTV_SCHEDULE) String scheduleFilename) {
         this.s3Client = s3Client;
         this.tsdtvBucket = tsdtvBucket;
         this.objectMapper = objectMapper;
         this.scheduler = scheduler;
+        this.scheduleFilename = scheduleFilename;
 
         try {
             log.warn("Starting TSDTVScheduler...");
@@ -67,10 +68,10 @@ public class TSDTVScheduler {
                 Constants.Scheduler.TSDTV_GROUP_ID, keys.stream().map(Key::getName).collect(Collectors.joining(",")));
         scheduler.deleteJobs(new LinkedList<>(keys));
 
-        log.info("Fetching schedule file from S3: {}/{}", tsdtvBucket, SCHEDULE_FILE);
-        S3Object scheduleFile = s3Client.getObject(tsdtvBucket, SCHEDULE_FILE);
+        log.info("Fetching schedule file from S3: {}/{}", tsdtvBucket, scheduleFilename);
+        S3Object scheduleFile = s3Client.getObject(tsdtvBucket, scheduleFilename);
         if (scheduleFile == null) {
-            throw new IOException("Could not find TSDTV schedule file in S3: " + tsdtvBucket + "/" + SCHEDULE_FILE);
+            throw new IOException("Could not find TSDTV schedule file in S3: " + tsdtvBucket + "/" + scheduleFilename);
         }
         
         Schedule schedule = objectMapper.readValue(scheduleFile.getObjectContent(), Schedule.class);

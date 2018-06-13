@@ -421,8 +421,10 @@ public class TSDTV {
                 double secondsRemaining = scheduledItem.getCommercialBreakMinutes()*60;
                 while (secondsRemaining > 0) {
                     Commercial commercial = library.getCommercial();
-                    toPlay.add(new QueuedItem(commercial));
-                    secondsRemaining -= commercial.getMediaInfo().getDurationSeconds();
+                    if (commercial != null) {
+                        toPlay.add(new QueuedItem(commercial));
+                        secondsRemaining -= commercial.getMediaInfo().getDurationSeconds();
+                    }
                 }
             }
         }

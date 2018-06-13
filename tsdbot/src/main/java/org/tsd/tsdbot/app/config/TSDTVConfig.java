@@ -10,6 +10,17 @@ public class TSDTVConfig {
     @NotNull
     private String channel;
 
+    @NotNull
+    private String schedule;
+
+    public String getSchedule() {
+        return schedule;
+    }
+
+    public void setSchedule(String schedule) {
+        this.schedule = schedule;
+    }
+
     public String getChannel() {
         return channel;
     }

@@ -11,6 +11,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import net.bramp.ffmpeg.FFprobe;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -28,8 +29,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -49,6 +49,9 @@ public class TSDTVLibrary {
 
     private final List<String> allCommercials;
     private final Map<String, Commercial> loadedCommercials = new ConcurrentHashMap<>();
+
+    private final ExecutorService executorService
+            = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
     @Inject
     public TSDTVLibrary(AgentRegistry agentRegistry,
@@ -118,11 +121,15 @@ public class TSDTVLibrary {
     }
 
     public Commercial getCommercial() {
-        synchronized (loadedCommercials) {
-            List<String> keys = new LinkedList<>(loadedCommercials.keySet());
-            Collections.shuffle(keys);
-            return loadedCommercials.remove(keys.get(0));
+        try {
+            Future<Commercial> commercialFuture = executorService.submit(new CommercialGetter());
+            Commercial commercial = commercialFuture.get(2, TimeUnit.MINUTES);
+            log.info("Retrieved commercial: {}", commercial);
+            return commercial;
+        } catch (Exception e) {
+            log.error("Error loading commercial", e);
         }
+        return null;
     }
 
     public TSDTVListing getListings() {
@@ -130,16 +137,14 @@ public class TSDTVLibrary {
 
         for (OnlineAgent onlineAgent : agentRegistry.getOnlineAgents()) {
             log.debug("Retrieving listings for agent: {}", onlineAgent);
-            List<AgentMedia<Movie>> moviesForAgent
-                    = onlineAgent.getInventory().getMovies()
+            List<AgentMedia<Movie>> moviesForAgent = onlineAgent.getInventory().getMovies()
                     .stream()
                     .map(movie -> new AgentMedia<>(movie, onlineAgent))
                     .collect(Collectors.toList());
             listing.getAllMovies().addAll(moviesForAgent);
             listing.getAllMovies().sort(Comparator.comparing(movie -> movie.getMedia().getName()));
 
-            List<AgentMedia<Series>> seriesForAgent
-                    = onlineAgent.getInventory().getSeries()
+            List<AgentMedia<Series>> seriesForAgent = onlineAgent.getInventory().getSeries()
                     .stream()
                     .map(series -> new AgentMedia<>(series, onlineAgent))
                     .collect(Collectors.toList());
@@ -194,6 +199,31 @@ public class TSDTVLibrary {
 
     public String getStreamUrl() {
         return streamUrl;
+    }
+
+    class CommercialGetter implements Callable<Commercial> {
+        @Override
+        public Commercial call() throws Exception {
+            Commercial retrieved = null;
+            while (true) {
+                synchronized (loadedCommercials) {
+                    if (CollectionUtils.isNotEmpty(loadedCommercials.keySet())) {
+                        List<String> keys = new LinkedList<>(loadedCommercials.keySet());
+                        Collections.shuffle(keys);
+                        String key = keys.get(0);
+                        retrieved = loadedCommercials.remove(key);
+                        log.info("Got commercial for key {}: {}", key, retrieved);
+                    }
+                }
+
+                if (retrieved != null) {
+                    return retrieved;
+                } else {
+                    log.warn("Failed to get loaded commercial, sleeping...");
+                    Thread.sleep(TimeUnit.SECONDS.toMillis(2));
+                }
+            }
+        }
     }
 
     class CommercialLoaderThread extends Thread {

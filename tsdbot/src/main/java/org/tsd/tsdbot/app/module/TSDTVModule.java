@@ -34,5 +34,10 @@ public class TSDTVModule extends AbstractModule {
         bind(String.class)
                 .annotatedWith(Names.named(Constants.Annotations.TSDTV_CHANNEL))
                 .toInstance(tsdtvConfig.getChannel());
+
+        log.info("Binding schedule to: {}", tsdtvConfig.getSchedule());
+        bind(String.class)
+                .annotatedWith(Names.named(Constants.Annotations.TSDTV_SCHEDULE))
+                .toInstance(tsdtvConfig.getSchedule());
     }
 }
