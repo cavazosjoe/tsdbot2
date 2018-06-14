@@ -61,8 +61,14 @@ public class TSDTVPlayer {
         log.info("Media playing, waiting to confirm start...");
         Thread.sleep(TimeUnit.SECONDS.toMillis(NANNY_SLEEP_PERIOD_SECONDS));
         if (!FFmpegJob.State.RUNNING.equals(runningStream.getState())) {
-            log.error("Stream failed to start, state = {}", runningStream.getState());
-            throw new Exception("Stream failed to start");
+            log.error("Stream failed to start, state = {}, media = {}", runningStream.getState(), media);
+            try {
+                log.warn("Stopping stream in error, state={}, media = {}", runningStream.getState(), media);
+                runningStream.stop();
+            } catch (Throwable t) {
+                log.error("Error stopping stream in error, media = "+media, t);
+            }
+            throw new Exception("Stream failed to start, media="+media);
         }
     }
 

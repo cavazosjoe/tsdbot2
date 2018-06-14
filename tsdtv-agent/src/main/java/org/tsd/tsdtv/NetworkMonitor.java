@@ -47,12 +47,12 @@ public class NetworkMonitor implements Runnable {
 
                 @Override
                 public void onProgress(float v, SpeedTestReport speedTestReport) {
-                    log.info("Progress {}: bitrate = {} kbit/s",
+                    log.debug("Progress {}: bitrate = {} kbit/s",
                             speedTestReport.getProgressPercent(),
                             speedTestReport.getTransferRateBit().longValue() / 1000);
                     if (speedTestReport.getProgressPercent() == 100f && bitsPerSecond == null) {
                         bitsPerSecond = speedTestReport.getTransferRateBit().longValue();
-                        log.info("Upload finished, uploaded bits = {}, speed = {} kbit/s",
+                        log.debug("Upload finished, uploaded bits = {}, speed = {} kbit/s",
                                 UPLOAD_FILE_SIZE_BYTES*8, bitsPerSecond/1000);
                     }
                 }

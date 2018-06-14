@@ -97,7 +97,7 @@ public class AgentInventory {
         List<File> files = listFilesAlphabetically(seriesDirectory);
         int episodeNumber = 0;
         for (File file : files) {
-            log.info("Evaluating file: {}", file);
+            log.debug("Evaluating file: {}", file);
             if (file.isDirectory()) {
                 Season season = compileSeason(series.getName(), file);
                 season.setSeriesName(series.getName());
@@ -148,7 +148,7 @@ public class AgentInventory {
         Episode episode = new Episode(agentId, mediaInfo);
         episode.setName(file.getName());
         episode.setEpisodeNumber(episodeNumber);
-        log.info("Built episode, file={}, episodeNumber={}: {}",
+        log.debug("Built episode, file={}, episodeNumber={}: {}",
                 file.getAbsolutePath(), episodeNumber, episode);
         filesById.put(episode.getId(), episode);
         return episode;
@@ -158,7 +158,7 @@ public class AgentInventory {
         MediaInfo mediaInfo = FfmpegUtil.getMediaInfo(fFprobe, file);
         Movie movie = new Movie(agentId, mediaInfo);
         movie.setName(file.getName());
-        log.info("Built movie, file={}: {}", file.getAbsolutePath(), movie);
+        log.debug("Built movie, file={}: {}", file.getAbsolutePath(), movie);
         return movie;
     }
 

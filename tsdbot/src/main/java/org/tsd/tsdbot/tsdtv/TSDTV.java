@@ -296,7 +296,7 @@ public class TSDTV {
                     TSDTVPlayJobResult result = jobQueue.submitTsdtvPlayJob(playJob);
 
                     if (!result.isSuccess()) {
-                        throw new TSDTVException("Error playing media");
+                        throw new TSDTVException("Error playing media: "+playJob);
                     }
 
                     long startedTimeUTC = result.getTimeStarted();
@@ -305,10 +305,11 @@ public class TSDTV {
                     log.info("Set nowPlaying start/end times, {} -> {}", queuedItem.getStartTime(), queuedItem.getEndTime());
                     this.nowPlaying = queuedItem;
 
-                    StringBuilder nowPlayingMessage = new StringBuilder("[TSDTV] NOW PLAYING: ")
-                            .append(getMediaString(this.nowPlaying.getMedia()))
-                            .append(" -- ").append(getBrowserLink());
-                    channel.sendMessage(nowPlayingMessage.toString());
+                    String nowPlayingMessage = "[TSDTV] NOW PLAYING: " +
+                            getMediaString(this.nowPlaying.getMedia()) +
+                            " -- " + getBrowserLink();
+
+                    channel.sendMessage(nowPlayingMessage);
 
                     long lastItemEndTime = queuedItem.getEndTime();
                     for (QueuedItem inQueue : queue) {
@@ -430,7 +431,7 @@ public class TSDTV {
         }
 
         if (CollectionUtils.isNotEmpty(toPlay)) {
-            String notification = "[TSDTV] @here Scheduled block now starting: " +
+            String notification = "[TSDTV] Scheduled block now starting: " +
                     block.getName() + "." +
                     "Lined up: " + buildShowsPlayingInBlock(toPlay) +
                     " -- " + getBrowserLink();
