@@ -25,6 +25,7 @@ public class HeartbeatThread implements Runnable {
     private final TSDBotClient tsdBotClient;
     private final AgentInventory agentInventory;
     private final Clock clock;
+    private final TSDTVPlayer tsdtvPlayer;
 
     private LocalDateTime inventoryLastSent = LocalDateTime.MIN;
     private boolean shutdown = false;
@@ -34,12 +35,14 @@ public class HeartbeatThread implements Runnable {
                            NetworkMonitor networkMonitor,
                            AgentInventory agentInventory,
                            Clock clock,
+                           TSDTVPlayer tsdtvPlayer,
                            @Named("agentId") String agentId) {
         this.agentId = agentId;
         this.tsdBotClient = tsdBotClient;
         this.networkMonitor = networkMonitor;
         this.agentInventory = agentInventory;
         this.clock = clock;
+        this.tsdtvPlayer = tsdtvPlayer;
     }
 
     public void run() {
@@ -96,8 +99,12 @@ public class HeartbeatThread implements Runnable {
     }
 
     private boolean shouldRefreshInventory() {
-        return agentInventory.isForceOverride() || inventoryLastSent
-                .isBefore(LocalDateTime.now(clock).minus(Constants.TSDTV.INVENTORY_REFRESH_PERIOD_MINUTES, ChronoUnit.MINUTES));
+        return !tsdtvPlayer.isPlaying()
+                && (agentInventory.isForceOverride() || isInventoryStale());
+    }
+
+    private boolean isInventoryStale() {
+        return inventoryLastSent.isBefore(LocalDateTime.now(clock).minus(Constants.TSDTV.INVENTORY_REFRESH_PERIOD_MINUTES, ChronoUnit.MINUTES));
     }
 
 }

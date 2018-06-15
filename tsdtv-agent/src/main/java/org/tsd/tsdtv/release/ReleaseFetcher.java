@@ -55,7 +55,15 @@ public abstract class ReleaseFetcher<R extends Release> {
 
         for (R releaseListing: releasesListing) {
             if (isValidRelease(releaseListing)) {
-                log.info("Detected valid release: {}", releaseListing);
+                if (log.isDebugEnabled()) {
+                    log.debug("Detected valid release: {}", releaseListing);
+                } else {
+                    log.info("Detected valid release: {}/{}/{}",
+                            releaseListing.getReleaseSource(),
+                            releaseListing.getSeriesName(),
+                            releaseListing.getEpisodeNumber());
+                }
+
                 File downloadedFile = null;
                 if (isNewRelease(releaseRepository, releaseListing)) {
                     log.warn("Detected new release: {}", releaseListing);
@@ -157,7 +165,7 @@ public abstract class ReleaseFetcher<R extends Release> {
     }
 
     private boolean isNewRelease(ReleaseRepository releaseRepository, R release) {
-        log.info("Checking if new release: {}", release);
+        log.debug("Checking if new release: {}", release);
         return releaseRepository.getReleaseGroups()
                 .stream()
 

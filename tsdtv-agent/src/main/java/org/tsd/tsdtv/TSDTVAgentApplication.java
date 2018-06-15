@@ -97,6 +97,8 @@ public class TSDTVAgentApplication extends Application<TSDTVAgentConfiguration> 
                 bind(new TypeLiteral<Map<ReleaseSource, List<String>>>() {})
                         .annotatedWith(Names.named("monitoringReleases"))
                         .toInstance(tsdtvAgentConfiguration.getReleases());
+
+                bind(TSDTVPlayer.class);
             }
         });
 

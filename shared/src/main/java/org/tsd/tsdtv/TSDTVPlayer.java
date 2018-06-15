@@ -50,7 +50,8 @@ public class TSDTVPlayer {
             if (progress.isEnd()) {
                 try {
                     FFmpegJob.State state = runningStream.getState();
-                    log.warn("Stream ended, state = {}", state);
+                    log.warn("Stream ended, state = {}, media = {}", state, media);
+                    stop();
                     handleEnd.accept(state);
                 } catch (Exception e) {
                     log.error("Error sending stopped notification to TSDBot", e);
@@ -62,21 +63,26 @@ public class TSDTVPlayer {
         Thread.sleep(TimeUnit.SECONDS.toMillis(NANNY_SLEEP_PERIOD_SECONDS));
         if (!FFmpegJob.State.RUNNING.equals(runningStream.getState())) {
             log.error("Stream failed to start, state = {}, media = {}", runningStream.getState(), media);
-            try {
-                log.warn("Stopping stream in error, state={}, media = {}", runningStream.getState(), media);
-                runningStream.stop();
-            } catch (Throwable t) {
-                log.error("Error stopping stream in error, media = "+media, t);
-            }
+            log.warn("Stopping stream in error, state={}, media = {}", runningStream.getState(), media);
+            stop();
             throw new Exception("Stream failed to start, media="+media);
         }
     }
 
     public void stop() {
         if (runningStream != null) {
-            log.warn("Stopping stream");
-            runningStream.stop();
-            log.warn("Stopped stream");
+            try {
+                log.warn("Stopping stream...");
+                runningStream.stop();
+                log.warn("Stopped stream");
+            } catch (Throwable t) {
+                log.error("Error stopping stream", t);
+            }
         }
+    }
+
+    public boolean isPlaying() {
+        return runningStream != null
+                && !runningStream.getState().isTerminal();
     }
 }

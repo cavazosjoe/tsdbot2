@@ -11,10 +11,20 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public abstract class FFmpegJob implements Runnable {
 
   public enum State {
-    WAITING,
-    RUNNING,
-    FINISHED,
-    FAILED,
+    WAITING   (false),
+    RUNNING   (false),
+    FINISHED  (true),
+    FAILED    (true);
+
+    private final boolean terminal;
+
+    State(boolean terminal) {
+      this.terminal = terminal;
+    }
+
+    public boolean isTerminal() {
+      return terminal;
+    }
   }
 
   final FFmpeg ffmpeg;
