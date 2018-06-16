@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
+import org.apache.commons.lang3.StringUtils;
 import org.quartz.*;
 import org.quartz.impl.matchers.GroupMatcher;
 import org.quartz.utils.Key;
@@ -19,6 +20,7 @@ import org.tsd.tsdbot.tsdtv.quartz.ScheduledBlockJob;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.stream.Collectors;
 
 import static org.quartz.CronScheduleBuilder.cronSchedule;
@@ -77,6 +79,20 @@ public class TSDTVScheduler {
         Schedule schedule = objectMapper.readValue(scheduleFile.getObjectContent(), Schedule.class);
         log.info("Read schedule from S3: {}", schedule);
 
+        TimeZone cronStringTimezone = Constants.Scheduler.TSDTV_DEFAULT_TIME_ZONE;
+
+        if (StringUtils.isNotBlank(schedule.getTimezone())) {
+            try {
+                log.info("Parsing cron string timezone from TSDTV schedule: {}", schedule.getTimezone());
+                cronStringTimezone = TimeZone.getTimeZone(schedule.getTimezone());
+                log.info("Successfully parsed cron string timezone from TSDTV schedule: {}", cronStringTimezone);
+            } catch (Exception e) {
+                log.error("Failed to parse cron string timezone from TSDTV schedule: "+schedule.getTimezone(), e);
+            }
+        }
+
+        log.info("Using cron string timezone: {}", cronStringTimezone);
+
         for (ScheduledBlock block : schedule.getScheduledBlocks()) {
             log.info("Evaluating scheduled block: {}", block);
             JobDataMap jobDataMap = new JobDataMap();
@@ -88,7 +104,7 @@ public class TSDTVScheduler {
                     .build();
 
             Trigger cronTrigger = newTrigger()
-                    .withSchedule(cronSchedule(block.getCronString()).inTimeZone(Constants.Scheduler.TSDTV_TIME_ZONE))
+                    .withSchedule(cronSchedule(block.getCronString()).inTimeZone(cronStringTimezone))
                     .build();
 
             scheduler.scheduleJob(job, cronTrigger);

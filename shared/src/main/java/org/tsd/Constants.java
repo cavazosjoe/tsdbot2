@@ -196,7 +196,7 @@ public class Constants {
     }
 
     public static class Scheduler {
-        public static final TimeZone TSDTV_TIME_ZONE = TimeZone.getTimeZone("America/New_York");
+        public static final TimeZone TSDTV_DEFAULT_TIME_ZONE = TimeZone.getTimeZone("America/New_York");
         public static final String TSDTV_GROUP_ID = "tsdtv";
         public static final String TSDTV_BLOCK_DATA_KEY = "blockInfo";
     }

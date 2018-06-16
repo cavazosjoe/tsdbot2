@@ -117,7 +117,10 @@ public class TSDTV {
         }
 
         if (queue != null) {
-            lineup.getQueue().addAll(queue);
+            lineup.setQueue(
+                    queue.stream()
+                    .filter(queuedItem -> queuedItem.getType() != QueuedItemType.commercial)
+                    .collect(Collectors.toList()));
         }
 
         lineup.setViewers(getViewerCount());
@@ -432,7 +435,7 @@ public class TSDTV {
 
         if (CollectionUtils.isNotEmpty(toPlay)) {
             String notification = "[TSDTV] Scheduled block now starting: " +
-                    block.getName() + "." +
+                    block.getName() + ". " +
                     "Lined up: " + buildShowsPlayingInBlock(toPlay) +
                     " -- " + getBrowserLink();
             channel.sendMessage(notification);
@@ -451,19 +454,19 @@ public class TSDTV {
     }
     
     private static String buildShowsPlayingInBlock(List<QueuedItem> blockItems) {
-        LinkedHashSet<String> shows = new LinkedHashSet<>();
-        shows.addAll(
-                blockItems.stream()
-                        .map(queuedItem -> {
-                            if (queuedItem.getMedia() instanceof Episode) {
-                                return ((Episode) queuedItem.getMedia()).getSeriesName();
-                            } else if (queuedItem.getMedia() instanceof Movie) {
-                                return ((Movie) queuedItem.getMedia()).getName();
-                            }
-                            return "UNKNOWN";
-                        })
-                        .collect(Collectors.toSet()));
-        return StringUtils.join(shows, ", ");
+        return blockItems
+                .stream()
+                .filter(queuedItem -> queuedItem.getType() != QueuedItemType.commercial)
+                .map(queuedItem -> {
+                    if (queuedItem.getMedia() instanceof Episode) {
+                        return ((Episode) queuedItem.getMedia()).getSeriesName();
+                    } else if (queuedItem.getMedia() instanceof Movie) {
+                        return ((Movie) queuedItem.getMedia()).getName();
+                    }
+                    return "UNKNOWN";
+                })
+                .distinct()
+                .collect(Collectors.joining(", "));
     }
 
     private Episode findEpisodeToPlay(ScheduledItem scheduledItem,
