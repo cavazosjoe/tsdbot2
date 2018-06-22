@@ -4,6 +4,7 @@ import io.dropwizard.hibernate.AbstractDAO;
 import io.dropwizard.hibernate.UnitOfWork;
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.SessionFactory;
+import org.hibernate.query.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,8 +51,26 @@ public class TSDTVEpisodicItemDao extends AbstractDAO<TSDTVEpisodicItem> {
     public void setCurrentEpisode(String seriesName, String seasonName, int episode) {
         log.info("Setting current episode, seriesName={}, seasonName={}, episode={}",
                 seriesName, seasonName, episode);
-        TSDTVEpisodicItem item = getCurrentEpisode(seriesName, seasonName);
-        item.setCurrentEpisode(episode);
-        log.info("Set episodic info: {}", item);
+
+        StringBuilder updateStatement = new StringBuilder("UPDATE TSDTVEpisodicItem SET currentEpisode = :episode " +
+                "WHERE seriesName = :series");
+
+        if (StringUtils.isNotBlank(seasonName)) {
+            updateStatement.append(" AND seasonName = :season");
+        } else {
+            updateStatement.append(" AND seasonName IS NULL");
+        }
+
+        Query query = currentSession()
+                .createQuery(updateStatement.toString())
+                .setParameter("episode", episode)
+                .setParameter("seriesName", seriesName);
+
+        if (StringUtils.isNotBlank(seasonName)) {
+            query.setParameter("seasonName", seasonName);
+        }
+
+        int updatedCount = query.executeUpdate();
+        log.info("Set episodic info, updated = {}", updatedCount);
     }
 }
